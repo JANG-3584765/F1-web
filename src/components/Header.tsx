@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const navItems = [
   { href: '/news',       label: '뉴스' },
@@ -14,6 +14,22 @@ const navItems = [
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [dark, setDark] = useState(false)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('theme')
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isDark = saved ? saved === 'dark' : prefersDark
+    setDark(isDark)
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : '')
+  }, [])
+
+  function toggleDark() {
+    const next = !dark
+    setDark(next)
+    document.documentElement.setAttribute('data-theme', next ? 'dark' : '')
+    localStorage.setItem('theme', next ? 'dark' : 'light')
+  }
 
   return (
     <>
@@ -41,9 +57,10 @@ export default function Header() {
         <div className="flex justify-end items-center pr-5 relative z-[9001]">
           <button
             className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] px-3 py-2 rounded-md text-[18px] bg-transparent border-none cursor-pointer hover:bg-black/5 transition-colors"
-            aria-label="다크 모드로 전환"
+            aria-label={dark ? '라이트 모드로 전환' : '다크 모드로 전환'}
+            onClick={toggleDark}
           >
-            🌙
+            {dark ? '☀️' : '🌙'}
           </button>
           <button
             className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] px-3 py-2 rounded-md text-[18px] bg-transparent border-none cursor-pointer text-[var(--text)] hover:bg-black/5 transition-colors"
