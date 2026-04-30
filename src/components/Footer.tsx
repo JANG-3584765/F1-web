@@ -49,7 +49,7 @@ export default function Footer() {
           비공식 정보 제공 사이트입니다.<br />
           모든 팀, 드라이버, 경기 데이터 및 이미지의 권리는 각 권리자에게 있습니다.
         </p>
-        <p className="text-xs text-[var(--border)] m-0">© 2025 WhatisF1. All rights reserved.</p>
+        <p className="text-xs text-[var(--muted)] m-0">© 2025 WhatisF1. All rights reserved.</p>
       </div>
 
     </footer>

@@ -28,4 +28,10 @@ html[data-theme="dark"] {
 body {
   background: var(--bg);
   color: var(--text);
+  font-family: "Pretendard Variable", "Pretendard", "Noto Sans KR", sans-serif;
+}
+
+/* 다크모드에서 사이드 메뉴 링크 hover */
+[data-theme="dark"] .side-menu-link:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
 }

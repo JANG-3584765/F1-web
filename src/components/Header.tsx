@@ -49,7 +49,7 @@ export default function Header() {
         {/* 가운데: 로고 */}
         <div className="flex justify-center items-center">
           <Link href="/">
-            <img src="/images/common/logo.png" alt="WhatisF1 로고" className="h-[70px] object-contain" />
+            <img src="/images/common/logo.png" alt="WhatisF1 로고" className="h-[70px] max-[480px]:h-[52px] object-contain" />
           </Link>
         </div>
 
@@ -77,7 +77,7 @@ export default function Header() {
       {/* 사이드 메뉴 */}
       <nav
         id="sideMenu"
-        className={`fixed top-0 h-screen w-[260px] bg-[var(--card)] shadow-[-2px_0_8px_rgba(0,0,0,0.15)] transition-[right] duration-300 pt-20 z-[9999] ${
+        className={`fixed top-0 h-screen w-[260px] max-[480px]:w-[220px] bg-[var(--card)] shadow-[-2px_0_8px_rgba(0,0,0,0.15)] transition-[right] duration-300 pt-20 z-[9999] ${
           menuOpen ? 'right-0' : 'right-[-260px]'
         }`}
       >
@@ -93,7 +93,7 @@ export default function Header() {
             <li key={item.href} className="border-b border-[var(--border)]">
               <Link
                 href={item.href}
-                className="block py-[18px] px-6 text-base text-[var(--text)] no-underline hover:bg-black/5 transition-colors"
+                className="side-menu-link block py-[18px] px-6 text-base text-[var(--text)] no-underline hover:bg-black/5 transition-colors"
                 onClick={() => setMenuOpen(false)}
               >
                 {item.label}
