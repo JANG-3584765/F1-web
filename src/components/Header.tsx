@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import { useSession, signOut } from 'next-auth/react'
 
 const navItems = [
   { href: '/news',       label: '뉴스' },
@@ -15,6 +16,7 @@ const navItems = [
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [dark, setDark] = useState(false)
+  const { data: session } = useSession()
 
   useEffect(() => {
     const saved = localStorage.getItem('theme')
@@ -36,14 +38,27 @@ export default function Header() {
       {/* 상단 헤더 */}
       <header className="w-full bg-[var(--card)] border-b border-[var(--border)] sticky top-0 z-[9000] backdrop-blur-sm grid grid-cols-[1fr_auto_1fr] items-center py-3">
 
-        {/* 왼쪽: 로그인 */}
+        {/* 왼쪽: 로그인 상태 */}
         <div className="flex items-center pl-5">
-          <Link
-            href="/login"
-            className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] px-3 py-2 rounded-md text-[18px] text-[var(--text)] no-underline hover:bg-black/5 transition-colors"
-          >
-            로그인
-          </Link>
+          {session ? (
+            <div className="flex items-center gap-2">
+              <img
+                src={session.user?.image ?? ''}
+                alt="프로필"
+                className="w-8 h-8 rounded-full object-cover"
+              />
+              <span className="text-sm text-[var(--text)] hidden sm:block truncate max-w-[80px]">
+                {session.user?.name?.split(' ')[0]}
+              </span>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] px-3 py-2 rounded-md text-[18px] text-[var(--text)] no-underline hover:bg-black/5 transition-colors"
+            >
+              로그인
+            </Link>
+          )}
         </div>
 
         {/* 가운데: 로고 */}
@@ -100,6 +115,16 @@ export default function Header() {
               </Link>
             </li>
           ))}
+          {session && (
+            <li className="border-b border-[var(--border)]">
+              <button
+                className="side-menu-link w-full text-left block py-[18px] px-6 text-base text-[var(--text)] bg-transparent border-none cursor-pointer hover:bg-black/5 transition-colors"
+                onClick={() => { signOut({ callbackUrl: '/' }); setMenuOpen(false) }}
+              >
+                로그아웃
+              </button>
+            </li>
+          )}
         </ul>
       </nav>
 
