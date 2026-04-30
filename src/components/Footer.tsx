@@ -26,7 +26,7 @@ export default function Footer() {
             <img
               src="/images/common/instagram_logo.png"
               alt="인스타그램"
-              className="w-7 h-7 object-contain hover:opacity-70 transition-opacity"
+              className="w-11 h-11 object-contain hover:opacity-70 transition-opacity"
             />
           </a>
         </div>
