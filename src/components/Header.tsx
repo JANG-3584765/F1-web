@@ -23,13 +23,21 @@ export default function Header() {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     const isDark = saved ? saved === 'dark' : prefersDark
     setDark(isDark)
-    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : '')
+    if (isDark) {
+      document.documentElement.setAttribute('data-theme', 'dark')
+    } else {
+      document.documentElement.removeAttribute('data-theme')
+    }
   }, [])
 
   function toggleDark() {
     const next = !dark
     setDark(next)
-    document.documentElement.setAttribute('data-theme', next ? 'dark' : '')
+    if (next) {
+      document.documentElement.setAttribute('data-theme', 'dark')
+    } else {
+      document.documentElement.removeAttribute('data-theme')
+    }
     localStorage.setItem('theme', next ? 'dark' : 'light')
   }
 
@@ -45,7 +53,7 @@ export default function Header() {
               <img
                 src={session.user?.image ?? ''}
                 alt="프로필"
-                className="w-8 h-8 rounded-full object-cover"
+                className="w-9 h-9 rounded-full object-cover ring-2 ring-[var(--border)]"
               />
               <span className="text-sm text-[var(--text)] hidden sm:block truncate max-w-[80px]">
                 {session.user?.name?.split(' ')[0]}
@@ -54,9 +62,14 @@ export default function Header() {
           ) : (
             <Link
               href="/login"
-              className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] px-3 py-2 rounded-md text-[18px] text-[var(--text)] no-underline hover:bg-black/5 transition-colors"
+              className="inline-flex items-center justify-center min-w-[44px] min-h-[44px]"
+              aria-label="로그인"
             >
-              로그인
+              <div className="w-9 h-9 rounded-full bg-[var(--border)] flex items-center justify-center hover:opacity-70 transition-opacity">
+                <svg className="w-5 h-5 text-[var(--muted)]" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              </div>
             </Link>
           )}
         </div>
