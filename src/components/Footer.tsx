@@ -15,7 +15,6 @@ export default function Footer() {
 
         {/* SNS */}
         <div className="flex flex-col items-center gap-1.5">
-          <p className="text-sm text-[var(--muted)] m-0">공식 인스타그램</p>
           <a
             href="https://www.instagram.com/what_is_f1__?igsh=MnlzdDAydWVuaW0w"
             target="_blank"
