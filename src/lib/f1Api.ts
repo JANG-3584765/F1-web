@@ -1,4 +1,4 @@
-const GP_NAMES: Record<string, string> = {
+export const GP_NAMES: Record<string, string> = {
   'Australian Grand Prix':    '호주 GP',
   'Chinese Grand Prix':       '중국 GP',
   'Japanese Grand Prix':      '일본 GP',
@@ -28,7 +28,7 @@ const GP_NAMES: Record<string, string> = {
   'Madrid Grand Prix':        '마드리드 GP',
 }
 
-const CIRCUIT_NAMES: Record<string, string> = {
+export const CIRCUIT_NAMES: Record<string, string> = {
   'Albert Park Grand Prix Circuit':  '알버트 파크 서킷',
   'Shanghai International Circuit':  '상하이 인터내셔널 서킷',
   'Suzuka Circuit':                  '스즈카 서킷',
@@ -56,7 +56,7 @@ const CIRCUIT_NAMES: Record<string, string> = {
   'Madring':                         '마드링',
 }
 
-const COUNTRY_CODES: Record<string, string> = {
+export const COUNTRY_CODES: Record<string, string> = {
   'Australia':    'au',
   'China':        'cn',
   'Japan':        'jp',
@@ -90,6 +90,7 @@ export interface Race {
   name: string
   circuit: string
   flag: string
+  city: string
   raceDate: string
   raceTime?: string
   sprint: boolean
@@ -133,6 +134,7 @@ export async function fetchSeasonRaces(year: number): Promise<Race[]> {
     name:     GP_NAMES[r.raceName] ?? r.raceName,
     circuit:  CIRCUIT_NAMES[r.Circuit.circuitName] ?? r.Circuit.circuitName,
     flag:     COUNTRY_CODES[r.Circuit.Location.country] ?? '',
+    city:     r.Circuit.Location.locality ?? '',
     raceDate: r.date,
     raceTime: r.time,
     sprint:   sprintRounds.has(r.round),
