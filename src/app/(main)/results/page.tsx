@@ -100,7 +100,7 @@ export default async function ResultsPage({
 
   const topRows = result?.results.filter(row => row.position != null).slice(0, 5) ?? []
   const restRows = result?.results.filter(row => row.position == null || row.position >= 6) ?? []
-  const city = result?.city ?? (raceMeta?.city ? getCityName(raceMeta.city) : '')
+  const city = result?.city ?? ''
 
   return (
     <main className="min-h-screen bg-[var(--bg-2)] px-4 py-10">
