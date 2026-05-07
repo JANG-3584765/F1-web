@@ -255,7 +255,21 @@ const STATUS_KR: Record<string, string> = {
   'Driver Seat':      '드라이버 시트',
 }
 
+export interface PitStop {
+  stop: number
+  lap: number
+  duration: string
+}
+
+export interface DriverPitData {
+  count: number
+  stops: PitStop[]
+}
+
+export type PitStopMap = Record<string, DriverPitData>
+
 export interface ResultRow {
+  driverId: string
   position: number | null
   code: string
   name: string
@@ -337,6 +351,7 @@ export async function fetchRaceResult(year: number, round: number): Promise<Race
       }
 
       return {
+        driverId: r.Driver.driverId ?? '',
         position: classified ? Number(r.position) : null,
         code: r.Driver.code ?? '',
         name: driverName,
@@ -361,6 +376,248 @@ export async function fetchRaceResult(year: number, round: number): Promise<Race
       fastestLapTime,
       results,
     }
+  } catch {
+    return null
+  }
+}
+
+export interface Stint {
+  stintNumber: number
+  lapStart: number
+  lapEnd: number
+  compound: string
+  tyreAge: number
+}
+
+export type TireStrategyMap = Record<string, Stint[]>
+
+export async function fetchTireStrategy(year: number, round: number): Promise<TireStrategyMap | null> {
+  try {
+    const sessionsRes = await fetch(
+      `https://api.openf1.org/v1/sessions?year=${year}&session_name=Race`,
+      { next: { revalidate: 3600 } },
+    )
+    if (!sessionsRes.ok) return null
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sessions: any[] = await sessionsRes.json()
+    if (!sessions.length) return null
+
+    // meeting_number은 프리시즌 테스팅(meeting 1)으로 인해 Ergast round와 오프셋이 생김
+    // date_start 기준 정렬 후 round-1 인덱스로 매칭
+    sessions.sort((a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime())
+    const session = sessions[round - 1]
+    if (!session) return null
+    const sessionKey: number = session.session_key
+
+    const [driversRes, stintsRes] = await Promise.all([
+      fetch(`https://api.openf1.org/v1/drivers?session_key=${sessionKey}`, { next: { revalidate: 3600 } }),
+      fetch(`https://api.openf1.org/v1/stints?session_key=${sessionKey}`, { next: { revalidate: 3600 } }),
+    ])
+    if (!driversRes.ok || !stintsRes.ok) return null
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const drivers: any[] = await driversRes.json()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const stints: any[] = await stintsRes.json()
+
+    const numberToCode: Record<number, string> = {}
+    for (const d of drivers) {
+      numberToCode[d.driver_number] = d.name_acronym
+    }
+
+    const map: TireStrategyMap = {}
+    for (const s of stints) {
+      const code = numberToCode[s.driver_number]
+      if (!code) continue
+      if (!map[code]) map[code] = []
+      map[code].push({
+        stintNumber: s.stint_number,
+        lapStart: s.lap_start,
+        lapEnd: s.lap_end ?? 0,
+        compound: s.compound ?? 'UNKNOWN',
+        tyreAge: s.tyre_age_at_start ?? 0,
+      })
+    }
+    return Object.keys(map).length > 0 ? map : null
+  } catch {
+    return null
+  }
+}
+
+// ===== QUALIFYING =====
+
+export interface QualifyingRow {
+  position: number
+  driverId: string
+  code: string
+  name: string
+  team: string
+  teamColor: string
+  q1: string | null
+  q2: string | null
+  q3: string | null
+}
+
+export async function fetchQualifyingResult(year: number, round: number): Promise<QualifyingRow[] | null> {
+  try {
+    const res = await fetch(
+      `https://api.jolpi.ca/ergast/f1/${year}/${round}/qualifying.json`,
+      { next: { revalidate: 3600 } },
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    const race = data.MRData.RaceTable.Races?.[0]
+    if (!race?.QualifyingResults?.length) return null
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (race.QualifyingResults as any[]).map((r): QualifyingRow => {
+      const name = getDriverName(r.Driver)
+      const team = getConstructorName(r.Constructor)
+      return {
+        position: Number(r.position),
+        driverId: r.Driver.driverId ?? '',
+        code: r.Driver.code ?? '',
+        name,
+        team,
+        teamColor: TEAM_COLORS[team] ?? '#999',
+        q1: r.Q1 ?? null,
+        q2: r.Q2 ?? null,
+        q3: r.Q3 ?? null,
+      }
+    })
+  } catch {
+    return null
+  }
+}
+
+// ===== SPRINT =====
+
+export interface SprintRow {
+  position: number | null
+  driverId: string
+  code: string
+  name: string
+  team: string
+  teamColor: string
+  timeOrGap: string
+  laps: number
+  points: number
+  classified: boolean
+}
+
+export async function fetchSprintResult(year: number, round: number): Promise<SprintRow[] | null> {
+  try {
+    const res = await fetch(
+      `https://api.jolpi.ca/ergast/f1/${year}/${round}/sprint.json`,
+      { next: { revalidate: 3600 } },
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    const race = data.MRData.RaceTable.Races?.[0]
+    if (!race?.SprintResults?.length) return null
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (race.SprintResults as any[]).map((r): SprintRow => {
+      const name = getDriverName(r.Driver)
+      const team = getConstructorName(r.Constructor)
+      const classified = !['R', 'D', 'W', 'N', 'E', 'F'].includes(r.positionText)
+
+      let timeOrGap: string
+      if (r.status === 'Finished') {
+        timeOrGap = r.Time?.time ?? '완주'
+      } else if (/^\+\d+ Laps?$/.test(r.status)) {
+        timeOrGap = r.status.replace(/Laps?$/, '랩')
+      } else {
+        timeOrGap = STATUS_KR[r.status] ?? r.status
+      }
+
+      return {
+        position: classified ? Number(r.position) : null,
+        driverId: r.Driver.driverId ?? '',
+        code: r.Driver.code ?? '',
+        name,
+        team,
+        teamColor: TEAM_COLORS[team] ?? '#999',
+        timeOrGap,
+        laps: Number(r.laps),
+        points: Number(r.points),
+        classified,
+      }
+    })
+  } catch {
+    return null
+  }
+}
+
+// ===== PRACTICE =====
+
+export interface PracticeRow {
+  position: number
+  driverId: string
+  code: string
+  name: string
+  team: string
+  teamColor: string
+  lapTime: string | null
+  laps: number
+}
+
+export async function fetchPracticeResult(year: number, round: number, session: 1 | 2 | 3): Promise<PracticeRow[] | null> {
+  try {
+    const res = await fetch(
+      `https://api.jolpi.ca/ergast/f1/${year}/${round}/practice/${session}.json`,
+      { next: { revalidate: 3600 } },
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    const race = data.MRData.RaceTable.Races?.[0]
+    if (!race?.PracticeResults?.length) return null
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (race.PracticeResults as any[]).map((r): PracticeRow => {
+      const name = getDriverName(r.Driver)
+      const team = getConstructorName(r.Constructor)
+      return {
+        position: Number(r.position),
+        driverId: r.Driver.driverId ?? '',
+        code: r.Driver.code ?? '',
+        name,
+        team,
+        teamColor: TEAM_COLORS[team] ?? '#999',
+        lapTime: r.Time?.time ?? null,
+        laps: Number(r.laps),
+      }
+    })
+  } catch {
+    return null
+  }
+}
+
+export async function fetchPitStops(year: number, round: number): Promise<PitStopMap | null> {
+  try {
+    const res = await fetch(
+      `https://api.jolpi.ca/ergast/f1/${year}/${round}/pitstops.json?limit=100`,
+      { next: { revalidate: 3600 } },
+    )
+    if (!res.ok) return null
+
+    const data = await res.json()
+    const race = data.MRData.RaceTable.Races?.[0]
+    if (!race?.PitStops?.length) return null
+
+    const map: PitStopMap = {}
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const ps of race.PitStops as any[]) {
+      if (!map[ps.driverId]) map[ps.driverId] = { count: 0, stops: [] }
+      map[ps.driverId].count++
+      map[ps.driverId].stops.push({
+        stop: Number(ps.stop),
+        lap: Number(ps.lap),
+        duration: ps.duration,
+      })
+    }
+    return map
   } catch {
     return null
   }
