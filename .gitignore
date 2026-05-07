@@ -42,3 +42,9 @@ next-env.d.ts
 
 # docs (local only)
 /docs
+
+# editor settings
+.vscode/
+
+# lockfile (solo project)
+package-lock.json
