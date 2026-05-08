@@ -80,116 +80,42 @@ export function getCityName(city: string): string {
   return CITY_NAMES[city] ?? city
 }
 
-const DRIVER_NAMES: Record<string, string> = {
-  'max_verstappen': '막스 베르스타펜',
-  'verstappen':     '막스 베르스타펜',
-  'lawson':         '리암 로슨',
-  'norris':         '란도 노리스',
-  'piastri':        '오스카 피아스트리',
-  'leclerc':        '샤를 르클레르',
-  'hamilton':       '루이스 해밀턴',
-  'russell':        '조지 러셀',
-  'antonelli':      '키미 안토넬리',
-  'alonso':         '페르난도 알론소',
-  'stroll':         '랜스 스트롤',
-  'gasly':          '피에르 가슬리',
-  'doohan':         '잭 두한',
-  'albon':          '알렉스 알본',
-  'sainz':          '카를로스 사인츠',
-  'tsunoda':        '유키 츠노다',
-  'hadjar':         '이삭 하자르',
-  'ocon':           '에스테반 오콘',
-  'bearman':        '올리버 베어만',
-  'hulkenberg':     '니코 휠켄베르크',
-  'bortoleto':      '가브리엘 보르톨레토',
-  'colapinto':      '프랑코 콜라핀토',
-  'lindblad':       '아비드 린드블라드',
-  'perez':          '세르히오 페레스',
-  'bottas':         '발테리 보타스',
-  'zhou':           '저우관위',
-  'herta':          '콜튼 허타',
-}
-
-const DRIVER_CODE_NAMES: Record<string, string> = {
-  VER: '막스 베르스타펜',
-  LAW: '리암 로슨',
-  NOR: '란도 노리스',
-  PIA: '오스카 피아스트리',
-  LEC: '샤를 르클레르',
-  HAM: '루이스 해밀턴',
-  RUS: '조지 러셀',
-  ANT: '키미 안토넬리',
-  ALO: '페르난도 알론소',
-  STR: '랜스 스트롤',
-  GAS: '피에르 가슬리',
-  DOO: '잭 두한',
-  ALB: '알렉스 알본',
-  SAI: '카를로스 사인츠',
-  TSU: '유키 츠노다',
-  HAD: '이삭 하자르',
-  OCO: '에스테반 오콘',
-  BEA: '올리버 베어만',
-  HUL: '니코 휠켄베르크',
-  BOR: '가브리엘 보르톨레토',
-  COL: '프랑코 콜라핀토',
-  LIN: '아비드 린드블라드',
-  PER: '세르히오 페레스',
-  BOT: '발테리 보타스',
-  ZHO: '저우관위',
-  HER: '콜튼 허타',
-}
-
+// 악센트(Pérez→Perez 등)는 getDriverName()에서 정규화 처리하므로 제거
+// API가 givenName+familyName 순서로 반환하므로 역순 중복 제거
+// Alexander/Alex Albon은 API가 실제로 두 형태 모두 사용해 유지
 const DRIVER_FULL_NAMES: Record<string, string> = {
-  'Max Verstappen': '막스 베르스타펜',
-  'Liam Lawson': '리암 로슨',
-  'Lando Norris': '란도 노리스',
-  'Oscar Piastri': '오스카 피아스트리',
-  'Charles Leclerc': '샤를 르클레르',
-  'Lewis Hamilton': '루이스 해밀턴',
-  'George Russell': '조지 러셀',
-  'Kimi Antonelli': '키미 안토넬리',
-  'Fernando Alonso': '페르난도 알론소',
-  'Lance Stroll': '랜스 스트롤',
-  'Pierre Gasly': '피에르 가슬리',
-  'Jack Doohan': '잭 두한',
-  'Alexander Albon': '알렉스 알본',
-  'Alex Albon': '알렉스 알본',
-  'Carlos Sainz': '카를로스 사인츠',
-  'Yuki Tsunoda': '유키 츠노다',
-  'Isack Hadjar': '이삭 하자르',
-  'Esteban Ocon': '에스테반 오콘',
-  'Oliver Bearman': '올리버 베어만',
-  'Nico Hulkenberg': '니코 휠켄베르크',
-  'Nico Hülkenberg': '니코 휠켄베르크',
+  // ── 2025 그리드 ──
+  'Max Verstappen':    '막스 베르스타펜',
+  'Liam Lawson':       '리암 로슨',
+  'Lando Norris':      '란도 노리스',
+  'Oscar Piastri':     '오스카 피아스트리',
+  'Charles Leclerc':   '샤를 르클레르',
+  'Lewis Hamilton':    '루이스 해밀턴',
+  'George Russell':    '조지 러셀',
+  'Kimi Antonelli':    '키미 안토넬리',
+  'Fernando Alonso':   '페르난도 알론소',
+  'Lance Stroll':      '랜스 스트롤',
+  'Pierre Gasly':      '피에르 가슬리',
+  'Jack Doohan':       '잭 두한',
+  'Alexander Albon':   '알렉스 알본',
+  'Alex Albon':        '알렉스 알본',
+  'Carlos Sainz':      '카를로스 사인츠',
+  'Yuki Tsunoda':      '유키 츠노다',
+  'Isack Hadjar':      '이삭 하자르',
+  'Esteban Ocon':      '에스테반 오콘',
+  'Oliver Bearman':    '올리버 베어만',
+  'Nico Hulkenberg':   '니코 휠켄베르크',
   'Gabriel Bortoleto': '가브리엘 보르톨레토',
-  'Franco Colapinto': '프랑코 콜라핀토',
-  'Arvid Lindblad': '아비드 린드블라드',
-  'Sergio Perez': '세르히오 페레스',
-  'Sergio Pérez': '세르히오 페레스',
-  'Valtteri Bottas': '발테리 보타스',
-  'Guanyu Zhou': '저우관위',
-  'Zhou Guanyu': '저우관위',
-  'Colton Herta': '콜튼 허타',
+  'Franco Colapinto':  '프랑코 콜라핀토',
+  'Arvid Lindblad':    '아비드 린드블라드',
+  // ── 최근 전임자 (FP 대체 출전 가능) ──
+  'Sergio Perez':      '세르히오 페레스',
+  'Valtteri Bottas':   '발테리 보타스',
+  'Guanyu Zhou':       '저우관위',
+  'Colton Herta':      '콜튼 허타',
 }
 
 const CONSTRUCTOR_NAMES: Record<string, string> = {
-  'red_bull':     '레드불',
-  'mclaren':      '맥라렌',
-  'ferrari':      '페라리',
-  'mercedes':     '메르세데스',
-  'aston_martin': '애스턴 마틴',
-  'alpine':       '알핀',
-  'williams':     '윌리엄스',
-  'rb':           '레이싱 불스',
-  'racing_bulls': '레이싱 불스',
-  'haas':         '하스',
-  'kick_sauber':  '킥 자우버',
-  'sauber':       '킥 자우버',
-  'audi':         '아우디',
-  'cadillac':     '캐딜락',
-}
-
-const CONSTRUCTOR_DISPLAY_NAMES: Record<string, string> = {
   'Red Bull Racing': '레드불',
   'Oracle Red Bull Racing': '레드불',
   'Red Bull': '레드불',
@@ -294,22 +220,17 @@ export interface RaceResult {
   results: ResultRow[]
 }
 
-function getDriverName(driver: {
-  driverId?: string
-  code?: string
-  givenName?: string
-  familyName?: string
-}) {
-  const idName = driver.driverId ? DRIVER_NAMES[driver.driverId] : undefined
-  const codeName = driver.code ? DRIVER_CODE_NAMES[driver.code] : undefined
-  const fullName = `${driver.givenName ?? ''} ${driver.familyName ?? ''}`.trim()
-  return idName ?? codeName ?? DRIVER_FULL_NAMES[fullName] ?? fullName
+function stripAccents(s: string) {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '')
 }
 
-function getConstructorName(constructor: { constructorId?: string; name?: string }) {
-  const idName = constructor.constructorId ? CONSTRUCTOR_NAMES[constructor.constructorId] : undefined
-  const displayName = constructor.name ? CONSTRUCTOR_DISPLAY_NAMES[constructor.name] : undefined
-  return idName ?? displayName ?? constructor.name ?? ''
+function getDriverName(driver: { givenName?: string; familyName?: string }) {
+  const fullName = `${driver.givenName ?? ''} ${driver.familyName ?? ''}`.trim()
+  return DRIVER_FULL_NAMES[fullName] ?? DRIVER_FULL_NAMES[stripAccents(fullName)] ?? fullName
+}
+
+function getConstructorName(constructor: { name?: string }) {
+  return constructor.name ? (CONSTRUCTOR_NAMES[constructor.name] ?? constructor.name) : ''
 }
 
 export async function fetchRaceResult(year: number, round: number): Promise<RaceResult | null> {

@@ -21,19 +21,16 @@ const DRIVER_KR_NAMES: Record<string, string> = {
   'Isack Hadjar':        '이삭 하자르',
   'Esteban Ocon':        '에스테반 오콘',
   'Oliver Bearman':      '올리버 베어만',
-  'Nico Hulkenberg':     '니코 휠켄베르크',
   'Nico Hülkenberg':     '니코 휠켄베르크',
   'Gabriel Bortoleto':   '가브리엘 보르톨레토',
   'Franco Colapinto':    '프랑코 콜라핀토',
   'Arvid Lindblad':      '아비드 린드블라드',
-  'Sergio Perez':        '세르히오 페레스',
   'Sergio Pérez':        '세르히오 페레스',
   'Valtteri Bottas':     '발테리 보타스',
   'Guanyu Zhou':         '저우관위',
-  'Zhou Guanyu':         '저우관위',
-  'Colton Herta':        '콜튼 허타',
-  'Nyck de Vries':       '니크 드 브리스',
-  'Logan Sargeant':      '로건 사전트',
+  'Colton Herta':        '콜튼 헤르타',
+  'Nyck de Vries':       '닉 더프리스',
+  'Logan Sargeant':      '로건 서전트',
   'Kevin Magnussen':     '케빈 마그누센',
   'Mick Schumacher':     '믹 슈마허',
   'Nikita Mazepin':      '니키타 마제핀',
@@ -43,15 +40,14 @@ const DRIVER_KR_NAMES: Record<string, string> = {
   'Nicholas Latifi':     '니콜라스 라티피',
   'Pietro Fittipaldi':   '피에트로 피티팔디',
   // ── 2010s ──
-  'Sebastian Vettel':    '세바스티안 페텔',
+  'Sebastian Vettel':    '세바스티안 베텔',
   'Jenson Button':       '젠슨 버튼',
   'Mark Webber':         '마크 웨버',
   'Felipe Massa':        '펠리페 마사',
   'Nico Rosberg':        '니코 로스베르크',
-  'Daniel Ricciardo':    '다니엘 리카도',
+  'Daniel Ricciardo':    '다니엘 리카르도',
   'Ralf Schumacher':     '랄프 슈마허',
   'Kimi Räikkönen':      '키미 라이코넨',
-  'Kimi Raikkonen':      '키미 라이코넨',
   'Heikki Kovalainen':   '헤이키 코발라이넨',
   'Vitaly Petrov':       '비탈리 페트로프',
   'Adrian Sutil':        '아드리안 수틸',
@@ -60,9 +56,9 @@ const DRIVER_KR_NAMES: Record<string, string> = {
   'Pastor Maldonado':    '파스토르 말도나도',
   'Jean-Eric Vergne':    '장-에릭 베르뉴',
   'Jules Bianchi':       '쥘 비앙키',
-  'Marcus Ericsson':     '마르쿠스 에릭슨',
+  'Marcus Ericsson':     '마르쿠스 에릭손',
   'Felipe Nasr':         '펠리페 나스르',
-  'Jolyon Palmer':       '졸리옹 파머',
+  'Jolyon Palmer':       '졸리언 팔머',
   'Esteban Gutierrez':   '에스테반 구티에레스',
   'Stoffel Vandoorne':   '스토펠 반도른',
   'Brendon Hartley':     '브렌던 하틀리',
@@ -72,7 +68,6 @@ const DRIVER_KR_NAMES: Record<string, string> = {
   'Rubens Barrichello':  '루벤스 바리첼로',
   'David Coulthard':     '데이비드 쿨타드',
   'Mika Häkkinen':       '미카 하키넨',
-  'Mika Hakkinen':       '미카 하키넨',
   'Juan Pablo Montoya':  '후안 파블로 몬토야',
   'Jarno Trulli':        '야르노 트룰리',
   'Giancarlo Fisichella':'지안카를로 피시켈라',
@@ -163,7 +158,6 @@ const DRIVER_KR_NAMES: Record<string, string> = {
   'John Watson':         '존 왓슨',
   'Vittorio Brambilla':  '비토리오 브람빌라',
   'François Cevert':     '프랑수아 세베르',
-  'Francois Cevert':     '프랑수아 세베르',
   'Jacky Ickx':          '재키 익스',
   'Rolf Stommelen':      '롤프 슈토멜렌',
   'Hans-Joachim Stuck':  '한스-요아힘 슈투크',
@@ -207,7 +201,6 @@ const DRIVER_KR_NAMES: Record<string, string> = {
   'Harry Schell':        '해리 쉘',
   'Roy Salvadori':       '로이 살바도리',
   'Maurice Trintignant': '모리스 트렝티냥',
-  'Froilan Gonzalez':    '프로일란 곤살레스',
   'José Froilán González':'프로일란 곤살레스',
   'Reg Parnell':         '레그 파넬',
   'Louis Rosier':        '루이 로지에',
@@ -241,8 +234,6 @@ const DRIVER_KR_NAMES: Record<string, string> = {
   'Johnny Claes':        '조니 클라에스',
   'Pierre Levegh':       '피에르 르베그',
   'Cuth Harrison':       '커스 해리슨',
-  'Andr챕 Pilette':       '앙드레 필레트',
-  'Andr챕 Simon':         '앙드레 시몽',
   'Andy Linden':         '앤디 린든',
   'Bobby Ball':          '바비 볼',
   'Carl Forberg':        '칼 포버그',
@@ -265,7 +256,6 @@ const DRIVER_KR_NAMES: Record<string, string> = {
   'Jim Rathmann':        '짐 래스먼',
   'Jimmy Bryan':         '지미 브라이언',
   'Ken Wharton':         '켄 워튼',
-  'Paul Fr챔re':          '폴 프레르',
   'Peter Hirt':          '피터 히르트',
   'Roger Laurent':       '로저 로랑',
   'Sam Hanks':           '샘 행크스',
@@ -275,10 +265,8 @@ const DRIVER_KR_NAMES: Record<string, string> = {
   'Hermann Lang':        '헤르만 랑',
   'Jacques Swaters':     '자크 스와터스',
   'Jimmy Daywalt':       '지미 데이월트',
-  'Oscar G찼lvez':        '오스카르 갈베스',
   'Paul Russo':          '폴 루소',
   'Roberto Mieres':      '로베르토 미에레스',
-  '횋lie Bayol':          '엘리 바욜',
   'Fred Wacker':         '프레드 웨커',
   'Hans Herrmann':       '한스 헤르만',
   'Karl Kling':          '카를 클링',
@@ -304,7 +292,6 @@ const DRIVER_KR_NAMES: Record<string, string> = {
   'Ludovico Scarfiotti': '루도비코 스카르피오티',
   'Mike Parkes':         '마이크 파크스',
   'Mike Spence':         '마이크 스펜스',
-  'Pedro Rodr챠guez':     '페드로 로드리게스',
   'Ronnie Bucknum':      '로니 버크넘',
   'Vic Wilson':          '빅 윌슨',
   'Brian Henton':        '브라이언 헨턴',
@@ -893,9 +880,19 @@ function approximateLatinName(name: string) {
     .join('')
 }
 
+// 악센트 제거 후 재시도 → 'Nico Hulkenberg' 가 'Nico Hülkenberg' 항목을 찾을 수 있도록
+const DRIVER_KR_NAMES_STRIPPED: Record<string, string> = Object.fromEntries(
+  Object.entries(DRIVER_KR_NAMES).map(([k, v]) => [
+    k.normalize('NFD').replace(/[̀-ͯ]/g, ''),
+    v,
+  ])
+)
+
 function getDriverKrName(originalName: string, driverId?: string) {
+  const stripped = originalName.normalize('NFD').replace(/[̀-ͯ]/g, '')
   return (driverId ? DRIVER_ID_KR_NAMES[driverId] : undefined)
     ?? DRIVER_KR_NAMES[originalName]
+    ?? DRIVER_KR_NAMES_STRIPPED[stripped]
     ?? approximateLatinName(originalName)
 }
 
