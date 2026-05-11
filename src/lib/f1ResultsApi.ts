@@ -29,7 +29,7 @@ export const CIRCUIT_INFO: Record<string, CircuitInfo> = {
   'Circuit Park Zandvoort':          { laps: 72, lengthKm: 4.259, image: '잔드보르트 서킷.png', lapRecord: { time: '1:11.097', driver: '루이스 해밀턴', year: 2021 } },
   'Autodromo Nazionale di Monza':    { laps: 53, lengthKm: 5.793, image: '몬자서킷.png', lapRecord: { time: '1:21.046', driver: '루벤스 바리첼로', year: 2004 } },
   'Baku City Circuit':               { laps: 51, lengthKm: 6.003, image: '바쿠 시티 서킷.png', lapRecord: { time: '1:43.009', driver: '샤를 르클레르', year: 2019 } },
-  'Marina Bay Street Circuit':       { laps: 62, lengthKm: 4.927, image: '마리나베이 서킷.png', lapRecord: { time: '1:34.486', driver: '다니엘 리카도', year: 2024 } },
+  'Marina Bay Street Circuit':       { laps: 62, lengthKm: 4.927, image: '마리나베이 서킷.png', lapRecord: { time: '1:34.486', driver: '다니엘 리카르도', year: 2024 } },
   'Circuit of the Americas':         { laps: 56, lengthKm: 5.513, image: '서킷 오브 디 아메리카스.png', lapRecord: { time: '1:36.169', driver: '샤를 르클레르', year: 2019 } },
   'Autódromo Hermanos Rodríguez':    { laps: 71, lengthKm: 4.304, image: '아우토드로모 에르마노스 로드리게스.png', lapRecord: { time: '1:17.774', driver: '발테리 보타스', year: 2021 } },
   'Autódromo José Carlos Pace':      { laps: 71, lengthKm: 4.309, image: '인터라고스 서킷.png', lapRecord: { time: '1:10.540', driver: '발테리 보타스', year: 2018 } },
@@ -92,7 +92,8 @@ const DRIVER_FULL_NAMES: Record<string, string> = {
   'Charles Leclerc':   '샤를 르클레르',
   'Lewis Hamilton':    '루이스 해밀턴',
   'George Russell':    '조지 러셀',
-  'Kimi Antonelli':    '키미 안토넬리',
+  'Kimi Antonelli':         '키미 안토넬리',
+  'Andrea Kimi Antonelli':  '키미 안토넬리',
   'Fernando Alonso':   '페르난도 알론소',
   'Lance Stroll':      '랜스 스트롤',
   'Pierre Gasly':      '피에르 가슬리',
@@ -112,7 +113,7 @@ const DRIVER_FULL_NAMES: Record<string, string> = {
   'Sergio Perez':      '세르히오 페레스',
   'Valtteri Bottas':   '발테리 보타스',
   'Guanyu Zhou':       '저우관위',
-  'Colton Herta':      '콜튼 허타',
+  'Colton Herta':      '콜튼 헤르타',
 }
 
 const CONSTRUCTOR_NAMES: Record<string, string> = {
