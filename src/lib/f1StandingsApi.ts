@@ -685,7 +685,7 @@ const CONSTRUCTOR_KR_NAMES: Record<string, string> = {
   'Footwork':                 '풋워크',
   'Pacific':                  '퍼시픽',
   'Forti':                    '포르티',
-  'Lola-Ferrari':             '롫라',
+  'Lola-Ferrari':             '롤라',
   'Jordan-Ford':              '조던',
   'Jordan-Peugeot':           '조던',
   'Jordan-Mugen-Honda':       '조던',

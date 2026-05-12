@@ -9,7 +9,7 @@ export default function TermsPage() {
         <section className="mb-8">
           <h2 className="text-base font-semibold text-[var(--text)] mb-3">제1조 (목적)</h2>
           <p className="text-sm text-[var(--muted)] leading-relaxed">
-            본 약관은 WhatisF1(이하 "사이트")이 제공하는 포뮬러 원(F1) 관련 정보 서비스의 이용 조건 및 절차, 이용자와 사이트 간의 권리·의무 및 책임 사항을 규정함을 목적으로 합니다.
+            본 약관은 WhatisF1(이하 &ldquo;사이트&rdquo;)이 제공하는 포뮬러 원(F1) 관련 정보 서비스의 이용 조건 및 절차, 이용자와 사이트 간의 권리·의무 및 책임 사항을 규정함을 목적으로 합니다.
           </p>
         </section>
 

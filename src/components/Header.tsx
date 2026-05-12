@@ -22,6 +22,7 @@ export default function Header() {
     const saved = localStorage.getItem('theme')
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     const isDark = saved ? saved === 'dark' : prefersDark
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDark(isDark)
     if (isDark) {
       document.documentElement.setAttribute('data-theme', 'dark')

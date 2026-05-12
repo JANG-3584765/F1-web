@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import type {
   ResultRow, PitStopMap, TireStrategyMap, Stint,
   QualifyingRow, SprintRow, PracticeRow,
@@ -338,12 +338,7 @@ export default function ResultTabs({ allRows, pitStopMap, tireMap, qualifying, s
   }), [fp1, fp2, fp3, qualifying, sprint, pitStopMap, tireMap])
 
   const [activeTab, setActiveTab] = useState<Tab>('전체 결과')
-
-  useEffect(() => {
-    if (!availableTabs.includes(activeTab)) {
-      setActiveTab('전체 결과')
-    }
-  }, [availableTabs, activeTab])
+  const currentTab = availableTabs.includes(activeTab) ? activeTab : '전체 결과'
 
   return (
     <div>
@@ -353,7 +348,7 @@ export default function ResultTabs({ allRows, pitStopMap, tireMap, qualifying, s
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`shrink-0 px-4 py-2.5 text-sm font-black border-b-2 -mb-px transition-colors ${
-              activeTab === tab
+              currentTab === tab
                 ? 'border-[var(--accent)] text-[var(--accent)]'
                 : 'border-transparent text-[var(--muted)] hover:text-[var(--text)]'
             }`}
@@ -363,14 +358,14 @@ export default function ResultTabs({ allRows, pitStopMap, tireMap, qualifying, s
         ))}
       </div>
 
-      {activeTab === 'FP1' && fp1 && <PracticeSection rows={fp1} />}
-      {activeTab === 'FP2' && fp2 && <PracticeSection rows={fp2} />}
-      {activeTab === 'FP3' && fp3 && <PracticeSection rows={fp3} />}
-      {activeTab === '퀄리파잉' && qualifying && <QualifyingSection rows={qualifying} />}
-      {activeTab === '스프린트' && sprint && <SprintSection rows={sprint} />}
-      {activeTab === '전체 결과' && <ResultTable rows={allRows} />}
-      {activeTab === '피트스탑' && pitStopMap && <PitStopSection rows={allRows} pitStopMap={pitStopMap} />}
-      {activeTab === '타이어 전략' && tireMap && <TireStrategySection rows={allRows} tireMap={tireMap} />}
+      {currentTab === 'FP1' && fp1 && <PracticeSection rows={fp1} />}
+      {currentTab === 'FP2' && fp2 && <PracticeSection rows={fp2} />}
+      {currentTab === 'FP3' && fp3 && <PracticeSection rows={fp3} />}
+      {currentTab === '퀄리파잉' && qualifying && <QualifyingSection rows={qualifying} />}
+      {currentTab === '스프린트' && sprint && <SprintSection rows={sprint} />}
+      {currentTab === '전체 결과' && <ResultTable rows={allRows} />}
+      {currentTab === '피트스탑' && pitStopMap && <PitStopSection rows={allRows} pitStopMap={pitStopMap} />}
+      {currentTab === '타이어 전략' && tireMap && <TireStrategySection rows={allRows} tireMap={tireMap} />}
     </div>
   )
 }

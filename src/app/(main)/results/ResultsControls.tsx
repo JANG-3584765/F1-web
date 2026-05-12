@@ -28,6 +28,7 @@ export default function ResultsControls({
   const [localRound, setLocalRound] = useState(selectedRound)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalSeason(selectedSeason)
     setLocalRound(selectedRound)
   }, [selectedSeason, selectedRound])

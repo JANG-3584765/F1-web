@@ -160,6 +160,7 @@ export default function PredictionPage() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (raw) setPrediction(JSON.parse(raw))
     } catch {}
     setMounted(true)
