@@ -119,17 +119,30 @@ export async function fetchSeasonRaces(year: number): Promise<Race[]> {
   const racesData = await racesRes.json()
   const sprintData = sprintRes.ok ? await sprintRes.json() : { MRData: { RaceTable: { Races: [] } } }
 
+  interface JolpicaSession { date: string; time?: string }
+  interface JolpicaRaceItem {
+    round: string
+    raceName: string
+    date: string
+    time?: string
+    Circuit: { circuitName: string; Location: { country: string; locality: string } }
+    FirstPractice?: JolpicaSession
+    SecondPractice?: JolpicaSession
+    ThirdPractice?: JolpicaSession
+    Qualifying?: JolpicaSession
+    SprintShootout?: JolpicaSession
+    SprintQualifying?: JolpicaSession
+    Sprint?: JolpicaSession
+  }
+
   const sprintRounds = new Set<string>(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    sprintData.MRData.RaceTable.Races.map((r: any) => r.round),
+    sprintData.MRData.RaceTable.Races.map((r: JolpicaRaceItem) => r.round),
   )
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const session = (s: any): RaceSession | undefined =>
+  const session = (s: JolpicaSession | undefined): RaceSession | undefined =>
     s ? { date: s.date, time: s.time } : undefined
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return racesData.MRData.RaceTable.Races.map((r: any): Race => ({
+  return racesData.MRData.RaceTable.Races.map((r: JolpicaRaceItem): Race => ({
     round:    Number(r.round),
     name:     GP_NAMES[r.raceName] ?? r.raceName,
     circuit:  CIRCUIT_NAMES[r.Circuit.circuitName] ?? r.Circuit.circuitName,

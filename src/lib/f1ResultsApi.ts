@@ -221,6 +221,46 @@ export interface RaceResult {
   results: ResultRow[]
 }
 
+interface JolpicaDriver {
+  driverId: string
+  givenName?: string
+  familyName?: string
+  code?: string
+}
+
+interface JolpicaConstructor {
+  name?: string
+}
+
+interface JolpicaResultItem {
+  position: string
+  positionText: string
+  points: string
+  laps: string
+  status: string
+  Driver: JolpicaDriver
+  Constructor: JolpicaConstructor
+  Time?: { time: string }
+  FastestLap?: { rank: string; Time?: { time: string } }
+}
+
+interface JolpicaQualifyingItem {
+  position: string
+  Driver: JolpicaDriver
+  Constructor: JolpicaConstructor
+  Q1?: string
+  Q2?: string
+  Q3?: string
+}
+
+interface JolpicaPracticeItem {
+  position: string
+  Driver: JolpicaDriver
+  Constructor: JolpicaConstructor
+  Time?: { time: string }
+  laps: string
+}
+
 function stripAccents(s: string) {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '')
 }
@@ -232,6 +272,12 @@ function getDriverName(driver: { givenName?: string; familyName?: string }) {
 
 function getConstructorName(constructor: { name?: string }) {
   return constructor.name ? (CONSTRUCTOR_NAMES[constructor.name] ?? constructor.name) : ''
+}
+
+function resolveTimeOrGap(status: string, time?: string): string {
+  if (status === 'Finished') return time ?? '완주'
+  if (/^\+\d+ Laps?$/.test(status)) return status.replace(/Laps?$/, '랩')
+  return STATUS_KR[status] ?? status
 }
 
 export async function fetchRaceResult(year: number, round: number): Promise<RaceResult | null> {
@@ -250,21 +296,12 @@ export async function fetchRaceResult(year: number, round: number): Promise<Race
     let fastestLapDriver: string | null = null
     let fastestLapTime: string | null = null
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const results: ResultRow[] = race.Results.map((r: any): ResultRow => {
+    const results: ResultRow[] = race.Results.map((r: JolpicaResultItem): ResultRow => {
       const driverName = getDriverName(r.Driver)
       const teamKr = getConstructorName(r.Constructor)
 
       const classified = !['R', 'D', 'W', 'N', 'E', 'F'].includes(r.positionText)
-
-      let timeOrGap: string
-      if (r.status === 'Finished') {
-        timeOrGap = r.Time?.time ?? '완주'
-      } else if (/^\+\d+ Laps?$/.test(r.status)) {
-        timeOrGap = r.status.replace(/Laps?$/, '랩')
-      } else {
-        timeOrGap = STATUS_KR[r.status] ?? r.status
-      }
+      const timeOrGap = resolveTimeOrGap(r.status, r.Time?.time)
 
       const isFastest = r.FastestLap?.rank === '1'
       if (isFastest) {
@@ -392,8 +429,7 @@ export async function fetchQualifyingResult(year: number, round: number): Promis
     const race = data.MRData.RaceTable.Races?.[0]
     if (!race?.QualifyingResults?.length) return null
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (race.QualifyingResults as any[]).map((r): QualifyingRow => {
+    return (race.QualifyingResults as JolpicaQualifyingItem[]).map((r): QualifyingRow => {
       const name = getDriverName(r.Driver)
       const team = getConstructorName(r.Constructor)
       return {
@@ -439,20 +475,11 @@ export async function fetchSprintResult(year: number, round: number): Promise<Sp
     const race = data.MRData.RaceTable.Races?.[0]
     if (!race?.SprintResults?.length) return null
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (race.SprintResults as any[]).map((r): SprintRow => {
+    return (race.SprintResults as JolpicaResultItem[]).map((r): SprintRow => {
       const name = getDriverName(r.Driver)
       const team = getConstructorName(r.Constructor)
       const classified = !['R', 'D', 'W', 'N', 'E', 'F'].includes(r.positionText)
-
-      let timeOrGap: string
-      if (r.status === 'Finished') {
-        timeOrGap = r.Time?.time ?? '완주'
-      } else if (/^\+\d+ Laps?$/.test(r.status)) {
-        timeOrGap = r.status.replace(/Laps?$/, '랩')
-      } else {
-        timeOrGap = STATUS_KR[r.status] ?? r.status
-      }
+      const timeOrGap = resolveTimeOrGap(r.status, r.Time?.time)
 
       return {
         position: classified ? Number(r.position) : null,
@@ -496,8 +523,7 @@ export async function fetchPracticeResult(year: number, round: number, session: 
     const race = data.MRData.RaceTable.Races?.[0]
     if (!race?.PracticeResults?.length) return null
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (race.PracticeResults as any[]).map((r): PracticeRow => {
+    return (race.PracticeResults as JolpicaPracticeItem[]).map((r): PracticeRow => {
       const name = getDriverName(r.Driver)
       const team = getConstructorName(r.Constructor)
       return {
@@ -529,8 +555,8 @@ export async function fetchPitStops(year: number, round: number): Promise<PitSto
     if (!race?.PitStops?.length) return null
 
     const map: PitStopMap = {}
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    for (const ps of race.PitStops as any[]) {
+    interface JolpicaPitStop { driverId: string; stop: string; lap: string; duration: string }
+    for (const ps of race.PitStops as JolpicaPitStop[]) {
       if (!map[ps.driverId]) map[ps.driverId] = { count: 0, stops: [] }
       map[ps.driverId].count++
       map[ps.driverId].stops.push({
