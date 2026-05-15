@@ -218,7 +218,8 @@ export default function RaceList({ races, year, seasons }: Props) {
 
       {/* 레이스 목록 */}
       {races.map(race => {
-        const isPast     = parseDate(race.raceDate) < today
+        const raceDateObj = parseDate(race.raceDate)
+        const isPast     = raceDateObj < today
         const isNext     = nextRace?.round === race.round
         const isExpanded = expandedRound === race.round
         const { display, weekday } = formatDate(race.raceDate)

@@ -145,8 +145,8 @@ function SprintSection({ rows }: { rows: SprintRow[] }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, i) => (
-            <tr key={row.driverId || i} className="border-t border-[var(--border)]">
+          {rows.map(row => (
+            <tr key={row.driverId} className="border-t border-[var(--border)]">
               <td className="px-3 py-3 text-center text-sm font-black text-[var(--text)]">{row.position ?? '-'}</td>
               <td className="px-3 py-3">
                 <div className="text-sm font-black text-[var(--text)] truncate">{row.name}</div>
@@ -342,10 +342,16 @@ export default function ResultTabs({ allRows, pitStopMap, tireMap, qualifying, s
 
   return (
     <div>
-      <div className="flex overflow-x-auto border-b border-[var(--border)] mb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div
+        role="tablist"
+        aria-label="경기 결과 탭"
+        className="flex overflow-x-auto border-b border-[var(--border)] mb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         {availableTabs.map(tab => (
           <button
             key={tab}
+            role="tab"
+            aria-selected={currentTab === tab}
             onClick={() => setActiveTab(tab)}
             className={`shrink-0 px-4 py-2.5 text-sm font-black border-b-2 -mb-px transition-colors ${
               currentTab === tab
