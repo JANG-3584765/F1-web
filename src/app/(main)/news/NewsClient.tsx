@@ -1,18 +1,22 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
 import type { NewsItem } from '@/lib/newsApi'
+import { encodeNewsSlug } from '@/lib/newsSlug'
 
-const EMOJIS = ['🔥', '😮', '😂', '👏', '😢']
-const SOURCES = ['전체', 'Autosport', 'Motorsport', 'BBC Sport']
+const EMOJIS   = ['🔥', '😮', '😂', '👏', '😢']
+const SOURCES  = ['전체', 'Autosport', 'Motorsport', 'BBC Sport']
+const DATE_TABS = ['오늘', '어제', '그저께', '3일 전', '4일 전'] as const
+type DateTab = typeof DATE_TABS[number]
+
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? ''
 
 function getSessionId(): string {
   let id = localStorage.getItem('f1_session_id')
-  if (!id) {
-    id = crypto.randomUUID()
-    localStorage.setItem('f1_session_id', id)
-  }
+  if (!id) { id = crypto.randomUUID(); localStorage.setItem('f1_session_id', id) }
   return id
 }
 
@@ -21,13 +25,30 @@ type ReactionMap = Record<string, Record<string, number>>
 async function fetchReactions(newsIds: string[]): Promise<ReactionMap> {
   if (newsIds.length === 0) return {}
   const res = await fetch(`/api/news/reactions?newsIds=${encodeURIComponent(newsIds.join(','))}`)
-  if (!res.ok) return {}
-  return res.json()
+  return res.ok ? res.json() : {}
 }
 
-function formatDate(iso: string) {
+function isSameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+}
+
+function getTargetDate(tab: DateTab): Date {
+  const daysAgo = DATE_TABS.indexOf(tab)
+  const d = new Date()
+  d.setDate(d.getDate() - daysAgo)
+  return d
+}
+
+function formatTime(iso: string) {
   const d = new Date(iso)
-  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+interface EditState {
+  titleKr: string
+  summaryKr: string
 }
 
 interface Props {
@@ -35,44 +56,57 @@ interface Props {
 }
 
 export default function NewsClient({ news }: Props) {
-  const [source, setSource] = useState('전체')
-  const [myReactions, setMyReactions] = useState<Record<string, string>>({}) // newsId → emoji
+  const { data: session } = useSession()
+  const isAdmin = !!ADMIN_EMAIL && session?.user?.email === ADMIN_EMAIL
+
+  const [source,  setSource]  = useState('전체')
+  const [dateTab, setDateTab] = useState<DateTab>('오늘')
+  const [myReactions, setMyReactions] = useState<Record<string, string>>({})
+
+  // 어드민 편집 상태
+  const [editingId,  setEditingId]  = useState<string | null>(null)
+  const [editValues, setEditValues] = useState<EditState>({ titleKr: '', summaryKr: '' })
+  const [saving,     setSaving]     = useState(false)
+  // 저장 후 즉시 반영용 로컬 오버라이드
+  const [overrides, setOverrides] = useState<Record<string, { title: string; summary: string }>>({})
+
   const qc = useQueryClient()
 
   useEffect(() => {
-    // localStorage에서 내 반응 기록 복원
     try {
       const saved = localStorage.getItem('f1_my_reactions')
       if (saved) setMyReactions(JSON.parse(saved))
     } catch { /* ignore */ }
   }, [])
 
-  const filtered = source === '전체' ? news : news.filter(n => n.source === source)
+  const filtered = useMemo(() => {
+    const target = getTargetDate(dateTab)
+    return news
+      .filter(n => isSameDay(new Date(n.pubDate), target))
+      .filter(n => source === '전체' || n.source === source)
+  }, [news, dateTab, source])
 
   const newsIds = filtered.map(n => n.id)
 
   const { data: reactions = {} } = useQuery<ReactionMap>({
-    queryKey: ['news-reactions', newsIds.join(',')],
-    queryFn:  () => fetchReactions(newsIds),
-    enabled:  newsIds.length > 0,
+    queryKey:  ['news-reactions', newsIds.join(',')],
+    queryFn:   () => fetchReactions(newsIds),
+    enabled:   newsIds.length > 0,
     staleTime: 30_000,
   })
 
-  const mutation = useMutation({
+  const reactionMutation = useMutation({
     mutationFn: async ({ newsId, emoji }: { newsId: string; emoji: string }) => {
-      const sessionId = getSessionId()
       const res = await fetch('/api/news/react', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ newsId, emoji, sessionId }),
+        body:    JSON.stringify({ newsId, emoji, sessionId: getSessionId() }),
       })
       return res.json() as Promise<{ action: 'added' | 'removed' }>
     },
     onMutate: async ({ newsId, emoji }) => {
-      // 낙관적 업데이트
       await qc.cancelQueries({ queryKey: ['news-reactions'] })
       const prev = qc.getQueryData<ReactionMap>(['news-reactions', newsIds.join(',')])
-
       const isToggleOff = myReactions[newsId] === emoji
 
       qc.setQueryData<ReactionMap>(['news-reactions', newsIds.join(',')], old => {
@@ -82,57 +116,101 @@ export default function NewsClient({ news }: Props) {
         if (prevEmoji && prevEmoji !== emoji) {
           next[newsId][prevEmoji] = Math.max(0, (next[newsId][prevEmoji] ?? 0) - 1)
         }
-        if (isToggleOff) {
-          next[newsId][emoji] = Math.max(0, (next[newsId][emoji] ?? 0) - 1)
-        } else {
-          next[newsId][emoji] = (next[newsId][emoji] ?? 0) + 1
-        }
+        next[newsId][emoji] = Math.max(0, (next[newsId][emoji] ?? 0) + (isToggleOff ? -1 : 1))
         return next
       })
 
-      const nextMyReactions = { ...myReactions }
-      if (isToggleOff) {
-        delete nextMyReactions[newsId]
-      } else {
-        nextMyReactions[newsId] = emoji
-      }
-      setMyReactions(nextMyReactions)
-      localStorage.setItem('f1_my_reactions', JSON.stringify(nextMyReactions))
-
+      const next = { ...myReactions }
+      if (isToggleOff) delete next[newsId]
+      else next[newsId] = emoji
+      setMyReactions(next)
+      localStorage.setItem('f1_my_reactions', JSON.stringify(next))
       return { prev }
     },
-    onError: (_err, _vars, ctx) => {
+    onError: (_e, _v, ctx) => {
       if (ctx?.prev) qc.setQueryData(['news-reactions', newsIds.join(',')], ctx.prev)
     },
-    onSettled: () => {
-      qc.invalidateQueries({ queryKey: ['news-reactions'] })
-    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['news-reactions'] }),
   })
 
   const handleReact = useCallback((newsId: string, emoji: string) => {
-    mutation.mutate({ newsId, emoji })
-  }, [mutation])
+    reactionMutation.mutate({ newsId, emoji })
+  }, [reactionMutation])
+
+  const openEdit = (item: NewsItem) => {
+    setEditingId(item.id)
+    setEditValues({
+      titleKr:   overrides[item.id]?.title   ?? (item.title !== item.titleEn ? item.title : ''),
+      summaryKr: overrides[item.id]?.summary ?? (item.summary !== item.summaryEn ? item.summary : ''),
+    })
+  }
+
+  const handleSave = async (articleUrl: string) => {
+    setSaving(true)
+    try {
+      const res = await fetch('/api/news/translate', {
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          articleUrl,
+          titleKr:   editValues.titleKr   || null,
+          summaryKr: editValues.summaryKr || null,
+        }),
+      })
+      if (res.ok) {
+        setOverrides(prev => ({
+          ...prev,
+          [articleUrl]: {
+            title:   editValues.titleKr   || '',
+            summary: editValues.summaryKr || '',
+          },
+        }))
+        setEditingId(null)
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div className="max-w-[720px] mx-auto flex flex-col gap-4">
+
       {/* 헤더 */}
-      <div className="bg-[var(--card)] rounded-xl shadow-sm px-6 py-5 flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-[var(--text)]">F1 뉴스</h1>
-          <p className="text-xs text-[var(--muted)] mt-0.5">주요 F1 미디어 최신 소식</p>
+      <div className="bg-[var(--card)] rounded-xl shadow-sm px-6 py-5">
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <div>
+            <h1 className="text-xl font-bold text-[var(--text)]">F1 뉴스</h1>
+            <p className="text-xs text-[var(--muted)] mt-0.5">주요 F1 미디어 최신 소식</p>
+          </div>
+          <div className="flex gap-1.5 flex-wrap justify-end">
+            {SOURCES.map(s => (
+              <button
+                key={s}
+                onClick={() => setSource(s)}
+                className={`text-xs font-semibold px-2.5 py-1 rounded-full border transition-colors ${
+                  source === s
+                    ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
+                    : 'text-[var(--muted)] border-[var(--border)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex gap-2 flex-wrap justify-end">
-          {SOURCES.map(s => (
+        {/* 날짜 탭 */}
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+          {DATE_TABS.map(tab => (
             <button
-              key={s}
-              onClick={() => setSource(s)}
-              className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
-                source === s
-                  ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
-                  : 'text-[var(--muted)] border-[var(--border)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+              key={tab}
+              onClick={() => setDateTab(tab)}
+              className={`flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
+                dateTab === tab
+                  ? 'bg-[var(--bg-2)] text-[var(--text)] border-[var(--text)]'
+                  : 'text-[var(--muted)] border-[var(--border)] hover:border-[var(--muted)]'
               }`}
             >
-              {s}
+              {tab}
             </button>
           ))}
         </div>
@@ -140,63 +218,153 @@ export default function NewsClient({ news }: Props) {
 
       {/* 뉴스 목록 */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 text-[var(--muted)] text-sm">
-          뉴스를 불러오는 중...
+        <div className="bg-[var(--card)] rounded-xl shadow-sm px-6 py-12 text-center">
+          <p className="text-sm text-[var(--muted)]">{dateTab} 기사가 없습니다.</p>
         </div>
       ) : (
         filtered.map(item => {
           const itemReactions = reactions[item.id] ?? {}
-          const myEmoji = myReactions[item.id]
+          const myEmoji  = myReactions[item.id]
+          const slug     = encodeNewsSlug(item.id)
+          const isEditing = editingId === item.id
+
+          const displayTitle   = overrides[item.id]?.title   || item.title
+          const displaySummary = overrides[item.id]?.summary || item.summary
+          const isTranslated   = displayTitle !== item.titleEn
 
           return (
             <article
               key={item.id}
-              className="bg-[var(--card)] rounded-xl shadow-sm px-5 py-4 flex flex-col gap-3"
+              className="bg-[var(--card)] rounded-xl shadow-sm overflow-hidden"
             >
-              {/* 소스 + 날짜 */}
-              <div className="flex items-center gap-2 text-[10px] text-[var(--muted)] font-semibold">
-                <span className="text-[var(--accent)]">{item.source}</span>
-                <span>·</span>
-                <span>{formatDate(item.pubDate)}</span>
-              </div>
-
-              {/* 제목 (클릭 → 원문) */}
-              <a
-                href={item.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-bold text-[var(--text)] hover:text-[var(--accent)] transition-colors leading-snug"
-              >
-                {item.title}
-              </a>
-
-              {/* 요약 */}
-              {item.summary && (
-                <p className="text-xs text-[var(--muted)] leading-relaxed line-clamp-2">
-                  {item.summary}
-                </p>
+              {/* 썸네일 */}
+              {item.image && !isEditing && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={item.image}
+                  alt=""
+                  className="w-full aspect-video object-cover"
+                  loading="lazy"
+                />
               )}
 
-              {/* 이모지 반응 */}
-              <div className="flex items-center gap-2 pt-1 flex-wrap">
-                {EMOJIS.map(emoji => {
-                  const count = itemReactions[emoji] ?? 0
-                  const isMe  = myEmoji === emoji
-                  return (
-                    <button
-                      key={emoji}
-                      onClick={() => handleReact(item.id, emoji)}
-                      className={`flex items-center gap-1 text-xs rounded-full px-2.5 py-1 border transition-colors ${
-                        isMe
-                          ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
-                          : 'border-[var(--border)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
-                      }`}
-                    >
-                      <span>{emoji}</span>
-                      {count > 0 && <span className="tabular-nums">{count}</span>}
-                    </button>
-                  )
-                })}
+              <div className="px-5 py-4 flex flex-col gap-2.5">
+                {/* 소스 + 시간 + 번역여부 */}
+                <div className="flex items-center gap-2 text-[10px] font-semibold">
+                  <span className="text-[var(--accent)]">{item.source}</span>
+                  <span className="text-[var(--muted)]">·</span>
+                  <span className="text-[var(--muted)]">{formatTime(item.pubDate)}</span>
+                  {!isTranslated && (
+                    <span className="text-yellow-500 border border-yellow-500/40 rounded px-1 py-px">EN</span>
+                  )}
+                </div>
+
+                {/* ─── 편집 모드 ─── */}
+                {isEditing ? (
+                  <div className="flex flex-col gap-3">
+                    {/* 원문 참고 */}
+                    <p className="text-[11px] text-[var(--muted)] bg-[var(--bg-2)] rounded p-2 leading-snug">
+                      <span className="font-semibold">원문: </span>{item.titleEn}
+                    </p>
+                    {item.summaryEn && (
+                      <p className="text-[11px] text-[var(--muted)] bg-[var(--bg-2)] rounded p-2 leading-snug">
+                        <span className="font-semibold">원문 요약: </span>{item.summaryEn}
+                      </p>
+                    )}
+
+                    {/* 한국어 제목 입력 */}
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-semibold text-[var(--muted)]">한국어 제목</label>
+                      <input
+                        type="text"
+                        value={editValues.titleKr}
+                        onChange={e => setEditValues(v => ({ ...v, titleKr: e.target.value }))}
+                        placeholder="한국어 제목 입력..."
+                        className="text-sm bg-[var(--bg-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-[var(--text)] outline-none focus:border-[var(--accent)] transition-colors"
+                      />
+                    </div>
+
+                    {/* 한국어 요약 입력 */}
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-semibold text-[var(--muted)]">한국어 요약</label>
+                      <textarea
+                        value={editValues.summaryKr}
+                        onChange={e => setEditValues(v => ({ ...v, summaryKr: e.target.value }))}
+                        placeholder="한국어 요약 입력..."
+                        rows={3}
+                        className="text-sm bg-[var(--bg-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-[var(--text)] outline-none focus:border-[var(--accent)] transition-colors resize-none"
+                      />
+                    </div>
+
+                    {/* 저장 / 취소 */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleSave(item.id)}
+                        disabled={saving}
+                        className="text-xs font-semibold bg-[var(--accent)] text-white rounded-lg px-4 py-1.5 disabled:opacity-50"
+                      >
+                        {saving ? '저장 중...' : '저장'}
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="text-xs font-semibold text-[var(--muted)] border border-[var(--border)] rounded-lg px-4 py-1.5 hover:border-[var(--muted)] transition-colors"
+                      >
+                        취소
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* 제목 */}
+                    <div className="flex items-start gap-2">
+                      <Link
+                        href={`/news/${slug}`}
+                        className="flex-1 text-sm font-bold text-[var(--text)] hover:text-[var(--accent)] transition-colors leading-snug"
+                      >
+                        {displayTitle}
+                      </Link>
+                      {isAdmin && (
+                        <button
+                          onClick={() => openEdit(item)}
+                          className="flex-shrink-0 text-[10px] font-semibold text-[var(--muted)] border border-[var(--border)] rounded px-1.5 py-0.5 hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors mt-0.5"
+                        >
+                          번역
+                        </button>
+                      )}
+                    </div>
+
+                    {/* 요약 */}
+                    {displaySummary && (
+                      <p className="text-xs text-[var(--muted)] leading-relaxed line-clamp-2">
+                        {displaySummary}
+                      </p>
+                    )}
+                  </>
+                )}
+
+                {/* 이모지 반응 */}
+                {!isEditing && (
+                  <div className="flex items-center gap-1.5 pt-0.5 flex-wrap">
+                    {EMOJIS.map(emoji => {
+                      const count = itemReactions[emoji] ?? 0
+                      const isMe  = myEmoji === emoji
+                      return (
+                        <button
+                          key={emoji}
+                          onClick={() => handleReact(item.id, emoji)}
+                          className={`flex items-center gap-1 text-xs rounded-full px-2.5 py-1 border transition-colors ${
+                            isMe
+                              ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                              : 'border-[var(--border)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                          }`}
+                        >
+                          <span>{emoji}</span>
+                          {count > 0 && <span className="tabular-nums">{count}</span>}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             </article>
           )
