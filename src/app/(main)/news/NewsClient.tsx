@@ -8,8 +8,8 @@ import type { NewsItem } from '@/lib/newsApi'
 import { encodeNewsSlug } from '@/lib/newsSlug'
 
 const EMOJIS   = ['🔥', '😮', '😂', '👏', '😢']
-const SOURCES  = ['전체', 'Autosport', 'Motorsport', 'BBC Sport']
-const DATE_TABS = ['오늘', '어제', '그저께', '3일 전', '4일 전'] as const
+const SOURCES  = ['전체', 'Autosport', 'Motorsport', 'BBC Sport', 'RaceFans', 'The Race', 'Crash.net']
+const DATE_TABS = ['오늘', '어제', '그저께', '3일 전', '4일 전', '5일 전', '6일 전'] as const
 type DateTab = typeof DATE_TABS[number]
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? ''
@@ -176,27 +176,27 @@ export default function NewsClient({ news }: Props) {
     <div className="max-w-[720px] mx-auto flex flex-col gap-4">
 
       {/* 헤더 */}
-      <div className="bg-[var(--card)] rounded-xl shadow-sm px-6 py-5">
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <div>
-            <h1 className="text-xl font-bold text-[var(--text)]">F1 뉴스</h1>
-            <p className="text-xs text-[var(--muted)] mt-0.5">주요 F1 미디어 최신 소식</p>
-          </div>
-          <div className="flex gap-1.5 flex-wrap justify-end">
-            {SOURCES.map(s => (
-              <button
-                key={s}
-                onClick={() => setSource(s)}
-                className={`text-xs font-semibold px-2.5 py-1 rounded-full border transition-colors ${
-                  source === s
-                    ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
-                    : 'text-[var(--muted)] border-[var(--border)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
-                }`}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
+      <div className="bg-[var(--card)] rounded-xl shadow-sm px-6 py-5 flex flex-col gap-3">
+        {/* 타이틀 */}
+        <div>
+          <h1 className="text-xl font-bold text-[var(--text)]">F1 뉴스</h1>
+          <p className="text-xs text-[var(--muted)] mt-0.5">주요 F1 미디어 최신 소식</p>
+        </div>
+        {/* 소스 필터 */}
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+          {SOURCES.map(s => (
+            <button
+              key={s}
+              onClick={() => setSource(s)}
+              className={`flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full border transition-colors ${
+                source === s
+                  ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
+                  : 'text-[var(--muted)] border-[var(--border)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+              }`}
+            >
+              {s}
+            </button>
+          ))}
         </div>
         {/* 날짜 탭 */}
         <div className="flex gap-1.5 overflow-x-auto pb-0.5">

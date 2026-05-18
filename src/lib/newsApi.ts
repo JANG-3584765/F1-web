@@ -57,6 +57,9 @@ const RSS_SOURCES = [
   { url: 'https://www.autosport.com/rss/f1/news/',          name: 'Autosport'  },
   { url: 'https://www.motorsport.com/rss/f1/news/',         name: 'Motorsport' },
   { url: 'https://feeds.bbci.co.uk/sport/formula1/rss.xml', name: 'BBC Sport'  },
+  { url: 'https://www.racefans.net/feed/',                  name: 'RaceFans'   },
+  { url: 'https://the-race.com/formula-1/feed/',            name: 'The Race'   },
+  { url: 'https://www.crash.net/rss/f1',                    name: 'Crash.net'  },
 ]
 
 function stripHtml(html: string): string {
@@ -100,7 +103,7 @@ function parseItems(parsed: ParsedRss, sourceName: string): RawNewsItem[] {
     return {
       id:        link,
       titleEn:   stripHtml(item.title ?? ''),
-      summaryEn: stripHtml(item.description ?? '').slice(0, 300),
+      summaryEn: stripHtml(item.description ?? '').slice(0, 500),
       link,
       pubDate:   item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
       source:    sourceName,
@@ -133,12 +136,12 @@ export async function fetchF1News(): Promise<NewsItem[]> {
     if (r.status === 'fulfilled') rawAll.push(...r.value)
   }
 
-  // 2. 중복 제거, 최신순, 최대 50개
+  // 2. 중복 제거, 최신순, 최대 100개
   const seen = new Set<string>()
   const raw = rawAll
     .filter(n => { if (seen.has(n.id)) return false; seen.add(n.id); return true })
     .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime())
-    .slice(0, 50)
+    .slice(0, 100)
 
   if (raw.length === 0) return []
 
