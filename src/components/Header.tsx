@@ -51,11 +51,17 @@ export default function Header() {
         <div className="flex items-center pl-5">
           {session ? (
             <div className="flex items-center gap-2">
-              <img
-                src={session.user?.image ?? ''}
-                alt="프로필"
-                className="w-9 h-9 rounded-full object-cover ring-2 ring-[var(--border)]"
-              />
+              {session.user?.image ? (
+                <img
+                  src={session.user.image}
+                  alt="프로필"
+                  className="w-9 h-9 rounded-full object-cover ring-2 ring-[var(--border)]"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-sm font-bold ring-2 ring-[var(--border)]">
+                  {session.user?.name?.slice(0, 1) ?? session.user?.email?.slice(0, 1)?.toUpperCase() ?? '?'}
+                </div>
+              )}
               <span className="text-sm text-[var(--text)] hidden sm:block truncate max-w-[80px]">
                 {session.user?.name?.split(' ')[0]}
               </span>

@@ -9,15 +9,18 @@ import { encodeNewsSlug } from '@/lib/newsSlug'
 
 const EMOJIS   = ['🔥', '😮', '😂', '👏', '😢']
 const SOURCES  = ['전체', 'Autosport', 'Motorsport', 'BBC Sport', 'RaceFans', 'The Race', 'Crash.net']
-const DATE_TABS = ['오늘', '어제', '그저께', '3일 전', '4일 전', '5일 전', '6일 전'] as const
+const DATE_TABS = ['오늘', '어제', '그저께', '3일 전', '4일 전'] as const
 type DateTab = typeof DATE_TABS[number]
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? ''
 
-function getSessionId(): string {
-  let id = localStorage.getItem('f1_session_id')
-  if (!id) { id = crypto.randomUUID(); localStorage.setItem('f1_session_id', id) }
-  return id
+const SOURCE_BG: Record<string, string> = {
+  'Autosport':  'linear-gradient(135deg, #7f1d1d, #b91c1c)',
+  'Motorsport': 'linear-gradient(135deg, #1e3a5f, #2563eb)',
+  'BBC Sport':  'linear-gradient(135deg, #7f1d1d, #374151)',
+  'RaceFans':   'linear-gradient(135deg, #14532d, #16a34a)',
+  'The Race':   'linear-gradient(135deg, #111827, #374151)',
+  'Crash.net':  'linear-gradient(135deg, #7c2d12, #ea580c)',
 }
 
 type ReactionMap = Record<string, Record<string, number>>
@@ -100,7 +103,7 @@ export default function NewsClient({ news }: Props) {
       const res = await fetch('/api/news/react', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ newsId, emoji, sessionId: getSessionId() }),
+        body:    JSON.stringify({ newsId, emoji }),
       })
       return res.json() as Promise<{ action: 'added' | 'removed' }>
     },
@@ -238,14 +241,23 @@ export default function NewsClient({ news }: Props) {
               className="bg-[var(--card)] rounded-xl shadow-sm overflow-hidden"
             >
               {/* 썸네일 */}
-              {item.image && !isEditing && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={item.image}
-                  alt=""
-                  className="w-full aspect-video object-cover"
-                  loading="lazy"
-                />
+              {!isEditing && (
+                item.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={item.image}
+                    alt=""
+                    className="w-full aspect-video object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div
+                    className="w-full aspect-video flex items-center justify-center"
+                    style={{ background: SOURCE_BG[item.source] ?? 'linear-gradient(135deg, #1a1a1a, #333)' }}
+                  >
+                    <span className="text-white/50 text-xs font-semibold tracking-wide uppercase">{item.source}</span>
+                  </div>
+                )
               )}
 
               <div className="px-5 py-4 flex flex-col gap-2.5">
@@ -344,25 +356,36 @@ export default function NewsClient({ news }: Props) {
 
                 {/* 이모지 반응 */}
                 {!isEditing && (
-                  <div className="flex items-center gap-1.5 pt-0.5 flex-wrap">
-                    {EMOJIS.map(emoji => {
-                      const count = itemReactions[emoji] ?? 0
-                      const isMe  = myEmoji === emoji
-                      return (
-                        <button
-                          key={emoji}
-                          onClick={() => handleReact(item.id, emoji)}
-                          className={`flex items-center gap-1 text-xs rounded-full px-2.5 py-1 border transition-colors ${
-                            isMe
-                              ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
-                              : 'border-[var(--border)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
-                          }`}
-                        >
-                          <span>{emoji}</span>
-                          {count > 0 && <span className="tabular-nums">{count}</span>}
-                        </button>
-                      )
-                    })}
+                  <div className="flex flex-col gap-1.5 pt-0.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {EMOJIS.map(emoji => {
+                        const count = itemReactions[emoji] ?? 0
+                        const isMe  = myEmoji === emoji
+                        return (
+                          <button
+                            key={emoji}
+                            onClick={() => session ? handleReact(item.id, emoji) : undefined}
+                            disabled={!session}
+                            className={`flex items-center gap-1 text-xs rounded-full px-2.5 py-1 border transition-colors ${
+                              !session
+                                ? 'border-[var(--border)] text-[var(--muted)] opacity-40 cursor-not-allowed'
+                                : isMe
+                                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                                  : 'border-[var(--border)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                            }`}
+                          >
+                            <span>{emoji}</span>
+                            <span className="tabular-nums">{count}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                    {!session && (
+                      <p className="text-[10px] text-[var(--muted)]">
+                        <a href="/login" className="text-[var(--accent)] hover:underline font-semibold">지금 로그인</a>
+                        하고 감정을 표현하세요
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

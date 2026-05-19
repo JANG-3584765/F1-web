@@ -2,14 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useSession } from 'next-auth/react'
 
 const EMOJIS = ['🔥', '😮', '😂', '👏', '😢']
-
-function getSessionId(): string {
-  let id = localStorage.getItem('f1_session_id')
-  if (!id) { id = crypto.randomUUID(); localStorage.setItem('f1_session_id', id) }
-  return id
-}
 
 type ReactionMap = Record<string, Record<string, number>>
 
@@ -18,6 +13,7 @@ interface Props {
 }
 
 export default function NewsDetailClient({ newsId }: Props) {
+  const { data: session } = useSession()
   const [myEmoji, setMyEmoji] = useState<string | null>(null)
   const qc = useQueryClient()
 
@@ -47,7 +43,7 @@ export default function NewsDetailClient({ newsId }: Props) {
       const res = await fetch('/api/news/react', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ newsId, emoji, sessionId: getSessionId() }),
+        body:    JSON.stringify({ newsId, emoji }),
       })
       return res.json() as Promise<{ action: 'added' | 'removed' }>
     },
@@ -97,19 +93,28 @@ export default function NewsDetailClient({ newsId }: Props) {
           return (
             <button
               key={emoji}
-              onClick={() => handleReact(emoji)}
+              onClick={() => session ? handleReact(emoji) : undefined}
+              disabled={!session}
               className={`flex items-center gap-1.5 text-sm rounded-full px-3 py-1.5 border transition-colors ${
-                isMe
-                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
-                  : 'border-[var(--border)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                !session
+                  ? 'border-[var(--border)] text-[var(--muted)] opacity-40 cursor-not-allowed'
+                  : isMe
+                    ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                    : 'border-[var(--border)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
               }`}
             >
               <span>{emoji}</span>
-              {count > 0 && <span className="tabular-nums text-xs font-semibold">{count}</span>}
+              <span className="tabular-nums text-xs font-semibold">{count}</span>
             </button>
           )
         })}
       </div>
+      {!session && (
+        <p className="text-xs text-[var(--muted)]">
+          <a href="/login" className="text-[var(--accent)] hover:underline font-semibold">지금 로그인</a>
+          하고 감정을 표현하세요
+        </p>
+      )}
     </div>
   )
 }

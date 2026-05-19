@@ -13,6 +13,15 @@ interface ArticleRow {
   pub_date:    string
 }
 
+const SOURCE_BG: Record<string, string> = {
+  'Autosport':  'linear-gradient(135deg, #7f1d1d, #b91c1c)',
+  'Motorsport': 'linear-gradient(135deg, #1e3a5f, #2563eb)',
+  'BBC Sport':  'linear-gradient(135deg, #7f1d1d, #374151)',
+  'RaceFans':   'linear-gradient(135deg, #14532d, #16a34a)',
+  'The Race':   'linear-gradient(135deg, #111827, #374151)',
+  'Crash.net':  'linear-gradient(135deg, #7c2d12, #ea580c)',
+}
+
 function formatDate(iso: string) {
   const d = new Date(iso)
   return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}.`
@@ -48,13 +57,20 @@ export default async function NewsDetailPage({ params }: Props) {
         </Link>
 
         {/* 썸네일 */}
-        {article.image_url && (
+        {article.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={article.image_url}
             alt=""
             className="w-full rounded-xl aspect-video object-cover"
           />
+        ) : (
+          <div
+            className="w-full rounded-xl aspect-video flex items-center justify-center"
+            style={{ background: SOURCE_BG[article.source] ?? 'linear-gradient(135deg, #1a1a1a, #333)' }}
+          >
+            <span className="text-white/50 text-sm font-semibold tracking-wide uppercase">{article.source}</span>
+          </div>
         )}
 
         <div className="bg-[var(--card)] rounded-xl shadow-sm px-6 py-6 flex flex-col gap-5">

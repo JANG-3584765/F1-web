@@ -19,6 +19,7 @@ interface MediaContent {
 interface RssItem {
   title?: string
   description?: string
+  'content:encoded'?: string
   link?: string
   guid?: string | { _: string; $?: Record<string, string> }
   pubDate?: string
@@ -70,6 +71,17 @@ function stripHtml(html: string): string {
     .trim()
 }
 
+const IMG_RE = /<img[^>]+src=["']([^"']+)["']/
+
+// BBC Sport: ichef.bbci.co.uk/onesport/cps/240/... → /976/...
+//            ichef.bbci.co.uk/ace/standard/240/... → /976/...
+function upgradeBbcImageUrl(url: string): string {
+  return url.replace(
+    /(ichef\.bbci\.co\.uk\/(?:onesport\/cps|ace\/standard))\/\d+\//,
+    '$1/976/',
+  )
+}
+
 function extractImage(item: RssItem): string | undefined {
   const media = item['media:content'] ?? item['media:thumbnail']
   if (media) {
@@ -78,8 +90,9 @@ function extractImage(item: RssItem): string | undefined {
   }
   const enc = item.enclosure
   if (enc?.$?.url && enc.$?.type?.startsWith('image')) return enc.$?.url
-  const desc = typeof item.description === 'string' ? item.description : ''
-  return desc.match(/<img[^>]+src=["']([^"']+)["']/)?.[1]
+  const desc    = typeof item.description       === 'string' ? item.description       : ''
+  const content = typeof item['content:encoded'] === 'string' ? item['content:encoded'] : ''
+  return desc.match(IMG_RE)?.[1] ?? content.match(IMG_RE)?.[1]
 }
 
 function parseItems(parsed: ParsedRss, sourceName: string): RawNewsItem[] {
@@ -107,7 +120,10 @@ function parseItems(parsed: ParsedRss, sourceName: string): RawNewsItem[] {
       link,
       pubDate:   item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
       source:    sourceName,
-      image:     extractImage(item),
+      image:     (() => {
+        const img = extractImage(item)
+        return img && sourceName === 'BBC Sport' ? upgradeBbcImageUrl(img) : img
+      })(),
     }
   }).filter(n => n.titleEn && n.link)
 }
@@ -171,6 +187,22 @@ export async function fetchF1News(): Promise<NewsItem[]> {
         })),
         { onConflict: 'article_url', ignoreDuplicates: true },
       )
+  }
+
+  // 4-1. 기존 기사 중 image_url이 null이었는데 RSS에 이미지가 생긴 경우 업데이트
+  const imagePatchArticles = raw.filter(n => {
+    const row = rowMap.get(n.link)
+    return row && !row.image_url && n.image
+  })
+  if (imagePatchArticles.length > 0) {
+    await Promise.allSettled(
+      imagePatchArticles.map(n =>
+        supabase.from('news_translations')
+          .update({ image_url: n.image })
+          .eq('article_url', n.link)
+          .is('image_url', null)
+      )
+    )
   }
 
   // 5. 최종 반환 (한국어 번역 있으면 사용, 없으면 영어 원문)
