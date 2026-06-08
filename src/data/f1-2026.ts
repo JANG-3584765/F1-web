@@ -1,0 +1,46 @@
+export const ALL_DRIVERS = [
+  { value: 'verstappen',  label: '막스 베르스타펜' },
+  { value: 'hadjar',      label: '아이작 하자르' },
+  { value: 'norris',      label: '랜도 노리스' },
+  { value: 'piastri',     label: '오스카 피아스트리' },
+  { value: 'leclerc',     label: '샤를 르클레르' },
+  { value: 'hamilton',    label: '루이스 해밀턴' },
+  { value: 'russell',     label: '조지 러셀' },
+  { value: 'antonelli',   label: '키미 안토넬리' },
+  { value: 'albon',       label: '알렉스 알본' },
+  { value: 'sainz',       label: '카를로스 사인츠' },
+  { value: 'lindblad',    label: '아비드 린드블라드' },
+  { value: 'lawson',      label: '리암 로슨' },
+  { value: 'alonso',      label: '페르난도 알론소' },
+  { value: 'stroll',      label: '랜스 스트롤' },
+  { value: 'ocon',        label: '에스테반 오콘' },
+  { value: 'bearman',     label: '올리버 베어먼' },
+  { value: 'hulkenberg',  label: '니코 휠켄베르트' },
+  { value: 'bortoleto',   label: '가브리에우 보르톨레투' },
+  { value: 'gasly',       label: '피에르 가슬리' },
+  { value: 'colapinto',   label: '프랑코 콜라핀토' },
+  { value: 'perez',       label: '세르히오 페레스' },
+  { value: 'bottas',      label: '발테리 보타스' },
+  { value: 'crawford',    label: '잭 크로포드' },
+  { value: 'herta',       label: '콜튼 헤르타' },
+]
+
+export const ALL_TEAMS = [
+  { value: 'mclaren',     label: '맥라렌' },
+  { value: 'mercedes',    label: '메르세데스' },
+  { value: 'redbull',     label: '레드불 레이싱' },
+  { value: 'ferrari',     label: '페라리' },
+  { value: 'williams',    label: '아틀라시안 윌리엄스' },
+  { value: 'rb',          label: '레이싱 불스' },
+  { value: 'astonmartin', label: '애스턴 마틴 아람코' },
+  { value: 'haas',        label: '하스' },
+  { value: 'audi',        label: '아우디' },
+  { value: 'alpine',      label: '알핀' },
+  { value: 'cadillac',    label: '캐딜락' },
+]
+
+export const ROOKIE_DRIVERS = [
+  { value: 'lindblad', label: '아비드 린드블라드' },
+  { value: 'crawford', label: '잭 크로포드' },
+  { value: 'herta',    label: '콜튼 헤르타' },
+]

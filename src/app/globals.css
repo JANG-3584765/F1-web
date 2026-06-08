@@ -1,0 +1,46 @@
+@import "tailwindcss";
+@import "flag-icons/css/flag-icons.min.css";
+
+/* ===== 컬러 변수 (라이트 / 다크 공통 사용) ===== */
+:root {
+  --bg:       #ffffff;
+  --bg-2:     #f4f6f8;
+  --card:     #ffffff;
+  --border:   #e5e7eb;
+  --text:     #111827;
+  --muted:    #6b7280;
+  --accent:   #e10600;
+  --input-bg: #f9fafb;
+  --shadow:   0 4px 12px rgba(0, 0, 0, 0.10);
+  --hover-bg: rgba(0, 0, 0, 0.05);
+}
+
+html[data-theme="dark"] {
+  --bg:       #0f1117;
+  --bg-2:     #181b26;
+  --card:     #1e2130;
+  --border:   #2d3148;
+  --text:     #e5e7eb;
+  --muted:    #9ca3af;
+  --accent:   #e10600;
+  --input-bg: #252839;
+  --shadow:   0 4px 12px rgba(0, 0, 0, 0.40);
+  --hover-bg: rgba(255, 255, 255, 0.06);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Pretendard Variable", "Pretendard", "Noto Sans KR", sans-serif;
+}
+
+.side-menu-link:hover {
+  background: var(--hover-bg);
+}
+
+.circuit-img {
+  filter: invert(0);
+}
+html[data-theme="dark"] .circuit-img {
+  filter: invert(1);
+}
