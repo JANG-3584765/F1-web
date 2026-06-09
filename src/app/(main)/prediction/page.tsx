@@ -13,7 +13,7 @@ interface Question {
   subtitle?: string
   type: SelectionType
   max?: number
-  options: { value: string; label: string }[]
+  options: { value: string; label: string; color?: string }[]
 }
 
 type Prediction = Record<number, { values: string[]; locked: boolean }>
@@ -91,13 +91,17 @@ function buildQuestions(raceOptions: { value: string; label: string }[]): Questi
     {
       id: 11,
       title: '내가 가장 응원하는 팀',
-      type: 'single',
+      subtitle: '최대 3개까지 선택할 수 있습니다.',
+      type: 'multi',
+      max: 3,
       options: ALL_TEAMS,
     },
     {
       id: 12,
       title: '내가 가장 응원할 드라이버',
-      type: 'single',
+      subtitle: '최대 3명까지 선택할 수 있습니다.',
+      type: 'multi',
+      max: 3,
       options: ALL_DRIVERS,
     },
   ]
@@ -132,6 +136,7 @@ export default function PredictionPage() {
   const [raceError, setRaceError] = useState(false)
   const [collapsedIds, setCollapsedIds] = useState<Set<number>>(new Set())
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
+  const [showLoginModal, setShowLoginModal] = useState(false)
   const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -227,7 +232,7 @@ export default function PredictionPage() {
     let values = [...data.values]
 
     if (q.type === 'single') {
-      values = [value]
+      values = values.includes(value) ? [] : [value]
     } else {
       const max = q.type === 'rank' ? 3 : (q.max ?? 1)
       values = values.includes(value)
@@ -239,6 +244,10 @@ export default function PredictionPage() {
   }
 
   function handleSubmit(q: Question) {
+    if (sessionStatus === 'unauthenticated') {
+      setShowLoginModal(true)
+      return
+    }
     const data = prediction[q.id] ?? { values: [], locked: false }
     if (!isComplete(q, data.values)) return
     save({ ...prediction, [q.id]: { ...data, locked: true } })
@@ -273,6 +282,38 @@ export default function PredictionPage() {
   if (!mounted) return null
 
   return (
+    <>
+    {showLoginModal && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+        onClick={() => setShowLoginModal(false)}
+      >
+        <div
+          className="bg-[var(--card)] rounded-2xl p-7 w-full max-w-sm shadow-2xl"
+          onClick={e => e.stopPropagation()}
+        >
+          <h2 className="text-lg font-black text-[var(--text)] mb-2">로그인이 필요합니다</h2>
+          <p className="text-sm text-[var(--muted)] leading-relaxed mb-6">
+            예측을 확정하려면 로그인해야 합니다.<br />
+            선택한 내용은 로그인 후에도 유지됩니다.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowLoginModal(false)}
+              className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm font-semibold text-[var(--muted)] hover:bg-[var(--bg-2)] transition-colors cursor-pointer"
+            >
+              취소
+            </button>
+            <a
+              href="/login"
+              className="flex-1 py-2.5 rounded-xl bg-[var(--accent)] text-white text-sm font-semibold text-center hover:opacity-90 transition-opacity"
+            >
+              로그인하기
+            </a>
+          </div>
+        </div>
+      </div>
+    )}
     <main className="flex-1 bg-[var(--bg-2)] py-12 px-4">
       <div className="max-w-[640px] mx-auto flex flex-col gap-6">
 
@@ -401,24 +442,35 @@ export default function PredictionPage() {
                     {/* rank — 선택 순서 슬롯 */}
                     {q.type === 'rank' && (
                       <div className="flex gap-2 mb-4">
-                        {[0, 1, 2].map(i => (
-                          <div
-                            key={i}
-                            className={`flex-1 flex items-center gap-1.5 rounded-lg border px-2.5 py-2 min-w-0
-                              ${values[i]
-                                ? 'border-[var(--accent)] bg-[var(--accent)]/10'
-                                : 'border-dashed border-[var(--border)]'
+                        {[0, 1, 2].map(i => {
+                          const slotOpt = q.options.find(o => o.value === values[i])
+                          const slotColor = slotOpt?.color
+                          return (
+                            <div
+                              key={i}
+                              className={`flex-1 flex items-center gap-1.5 rounded-lg border px-2.5 py-2 min-w-0
+                                ${values[i]
+                                  ? slotColor ? '' : 'border-[var(--accent)] bg-[var(--accent)]/10'
+                                  : 'border-dashed border-[var(--border)]'
+                                }
+                              `}
+                              style={values[i] && slotColor
+                                ? { borderColor: slotColor, backgroundColor: slotColor + '18' }
+                                : undefined
                               }
-                            `}
-                          >
-                            <span className={`text-xs font-bold flex-shrink-0 ${values[i] ? 'text-[var(--accent)]' : 'text-[var(--muted)]'}`}>
-                              {i + 1}위
-                            </span>
-                            <span className="text-xs text-[var(--text)] truncate">
-                              {values[i] ? q.options.find(o => o.value === values[i])?.label : '—'}
-                            </span>
-                          </div>
-                        ))}
+                            >
+                              <span
+                                className="text-xs font-bold flex-shrink-0"
+                                style={{ color: values[i] ? (slotColor ?? 'var(--accent)') : 'var(--muted)' }}
+                              >
+                                {i + 1}위
+                              </span>
+                              <span className="text-xs text-[var(--text)] truncate">
+                                {slotOpt?.label ?? '—'}
+                              </span>
+                            </div>
+                          )
+                        })}
                       </div>
                     )}
 
@@ -447,6 +499,7 @@ export default function PredictionPage() {
                         {q.options.map(opt => {
                           const rankIndex = q.type === 'rank' ? values.indexOf(opt.value) : -1
                           const isSelected = values.includes(opt.value)
+                          const color = opt.color
 
                           return (
                             <button
@@ -456,14 +509,25 @@ export default function PredictionPage() {
                               className={`flex items-center gap-1.5 px-3 py-2.5 rounded-lg border text-sm font-medium transition-colors
                                 ${useGrid ? 'w-full text-left' : ''}
                                 ${isSelected
-                                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
-                                  : 'bg-[var(--bg-2)] border-[var(--border)] text-[var(--text)] hover:border-[var(--accent)]'
+                                  ? color ? 'border-2' : 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                                  : 'bg-[var(--bg-2)] border-[var(--border)] text-[var(--text)]'
                                 }
+                                ${!isSelected && !color ? 'hover:border-[var(--accent)]' : ''}
                                 ${locked ? 'cursor-not-allowed' : 'cursor-pointer'}
                               `}
+                              style={
+                                isSelected && color
+                                  ? { backgroundColor: color + '20', borderColor: color, color }
+                                  : !isSelected && color && useGrid
+                                    ? { borderLeftColor: color, borderLeftWidth: '3px', borderLeftStyle: 'solid' }
+                                    : undefined
+                              }
                             >
                               {q.type === 'rank' && isSelected && (
-                                <span className="w-5 h-5 rounded-full bg-white text-[var(--accent)] text-xs font-bold flex items-center justify-center flex-shrink-0">
+                                <span
+                                  className="w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center flex-shrink-0"
+                                  style={{ backgroundColor: color ?? 'white', color: color ? 'white' : 'var(--accent)' }}
+                                >
                                   {rankIndex + 1}
                                 </span>
                               )}
@@ -496,5 +560,6 @@ export default function PredictionPage() {
 
       </div>
     </main>
+    </>
   )
 }
