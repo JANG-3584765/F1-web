@@ -163,6 +163,26 @@ async function processYear(
     })
 }
 
+async function processEra(
+  startYear: number,
+  endYear: number,
+  query: string,
+  compactQuery: string,
+): Promise<Map<string, StandingTrendGroup>> {
+  const groups = new Map<string, StandingTrendGroup>()
+  const seasons = Array.from(
+    { length: endYear - startYear + 1 },
+    (_, i) => startYear + i,
+  )
+
+  for (let i = 0; i < seasons.length; i += BATCH_SIZE) {
+    const batch = seasons.slice(i, i + BATCH_SIZE)
+    await Promise.all(batch.map(year => processYear(year, query, compactQuery, groups)))
+  }
+
+  return groups
+}
+
 export async function GET(request: NextRequest) {
   const rawQuery = request.nextUrl.searchParams.get('q') ?? ''
   const query = normalizeSearch(rawQuery)
@@ -175,18 +195,23 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  const groups = new Map<string, StandingTrendGroup>()
-  const seasons = Array.from(
-    { length: CURRENT_YEAR - FIRST_DRIVER_SEASON + 1 },
-    (_, i) => FIRST_DRIVER_SEASON + i,
-  )
+  const [groups1900s, groups2000s] = await Promise.all([
+    processEra(FIRST_DRIVER_SEASON, 1999, query, compactQuery),
+    processEra(2000, CURRENT_YEAR, query, compactQuery),
+  ])
 
-  for (let i = 0; i < seasons.length; i += BATCH_SIZE) {
-    const batch = seasons.slice(i, i + BATCH_SIZE)
-    await Promise.all(batch.map(year => processYear(year, query, compactQuery, groups)))
+  // 두 시대 모두 활동한 드라이버/팀은 2000년대 그룹에 병합해 1900년대 병목 완화
+  const mergedGroups = new Map(groups2000s)
+  for (const [key, group] of groups1900s) {
+    const existing = mergedGroups.get(key)
+    if (existing) {
+      existing.points.push(...group.points)
+    } else {
+      mergedGroups.set(key, group)
+    }
   }
 
-  const results = Array.from(groups.values())
+  const results = Array.from(mergedGroups.values())
     .map(group => ({
       ...group,
       points: group.points.sort((a, b) => a.year - b.year),
