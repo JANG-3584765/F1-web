@@ -219,14 +219,16 @@ function TrendCard({ group }: { group: StandingTrendGroup }) {
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-md border border-[var(--border)]">
-        <table className="w-full min-w-[520px] table-fixed border-collapse">
+        <table className={`w-full table-fixed border-collapse ${group.type === 'driver' ? 'min-w-[520px]' : 'min-w-[360px]'}`}>
           <thead>
             <tr className="bg-[var(--bg-2)] text-xs text-[var(--muted)]">
               <th className="w-20 px-3 py-2 text-center font-bold">시즌</th>
               <th className="w-16 px-3 py-2 text-center font-bold">순위</th>
               <th className="w-20 px-3 py-2 text-center font-bold">승</th>
               <th className="w-24 px-3 py-2 text-center font-bold">포인트</th>
-              <th className="px-3 py-2 text-left font-bold">팀</th>
+              {group.type === 'driver' && (
+                <th className="px-3 py-2 text-left font-bold">팀</th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -238,9 +240,11 @@ function TrendCard({ group }: { group: StandingTrendGroup }) {
                 </td>
                 <td className="px-3 py-2 text-center text-xs font-bold text-[var(--text)]">{point.wins}</td>
                 <td className="px-3 py-2 text-center text-xs font-black text-[var(--text)]">{point.points}</td>
-                <td className="px-3 py-2 text-xs font-bold text-[var(--muted)]">
-                  {point.team ?? (latest === point ? '현재 컨스트럭터' : '-')}
-                </td>
+                {group.type === 'driver' && (
+                  <td className="px-3 py-2 text-xs font-bold text-[var(--muted)]">
+                    {point.team ?? '-'}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
