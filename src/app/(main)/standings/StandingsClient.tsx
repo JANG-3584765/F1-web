@@ -82,11 +82,6 @@ function DriverTable({ rows }: { rows: DriverStandingRow[] }) {
                   <div className="min-w-0">
                     <div className="text-sm font-black leading-tight text-[var(--text)]">
                       {row.name}
-                      {row.originalName !== row.name && (
-                        <span className="ml-1 text-xs font-bold text-[var(--muted)]">
-                          ({row.originalName})
-                        </span>
-                      )}
                     </div>
                     {row.code && (
                       <div className="text-xs font-bold text-[var(--muted)]">{row.code}</div>
@@ -143,11 +138,6 @@ function ConstructorTable({ rows }: { rows: ConstructorStandingRow[] }) {
                     />
                     <span className="text-sm font-black leading-tight text-[var(--text)]">
                       {row.name}
-                      {row.originalName !== row.name && (
-                        <span className="ml-1 text-xs font-bold text-[var(--muted)]">
-                          ({row.originalName})
-                        </span>
-                      )}
                     </span>
                   </div>
                 </div>
@@ -176,11 +166,6 @@ function TrendCard({ group }: { group: StandingTrendGroup }) {
           </div>
           <h3 className="text-base font-black text-[var(--text)]">
             {group.name}
-            {group.originalName !== group.name && (
-              <span className="ml-1 text-xs font-bold text-[var(--muted)]">
-                ({group.originalName})
-              </span>
-            )}
           </h3>
         </div>
         <div className="grid grid-cols-3 gap-2 text-center">
