@@ -1,4 +1,4 @@
-import { fetchDriverStandings, fetchConstructorStandings } from '@/lib/f1StandingsApi'
+import { fetchEnrichedStandings } from '@/lib/f1StandingsApi'
 import StandingsClient from './StandingsClient'
 
 const CURRENT_YEAR = new Date().getFullYear()
@@ -14,10 +14,7 @@ export default async function StandingsPage({
     ? Number(params.season)
     : CURRENT_YEAR
 
-  const [drivers, constructors] = await Promise.all([
-    fetchDriverStandings(selectedSeason),
-    selectedSeason >= 1958 ? fetchConstructorStandings(selectedSeason) : Promise.resolve(null),
-  ])
+  const { drivers, constructors } = await fetchEnrichedStandings(selectedSeason)
 
   return (
     <main className="min-h-screen bg-[var(--bg-2)] px-4 py-10">

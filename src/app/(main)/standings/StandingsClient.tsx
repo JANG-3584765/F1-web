@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { DriverStandingRow, ConstructorStandingRow } from '@/lib/f1StandingsApi'
 
@@ -36,6 +36,13 @@ type StandingSearchResponse = {
   message?: string
 }
 
+function PositionChange({ change }: { change?: number | null }) {
+  if (change == null) return null
+  if (change === 0) return <span className="block text-[10px] font-bold text-[var(--muted)]">—</span>
+  if (change > 0) return <span className="block text-[10px] font-bold text-green-500">▲{change}</span>
+  return <span className="block text-[10px] font-bold text-red-500">▼{Math.abs(change)}</span>
+}
+
 function positionClass(pos: number | null) {
   if (pos === 1) return 'text-yellow-500'
   if (pos === 2) return 'text-slate-400'
@@ -58,21 +65,25 @@ function bestPosition(points: StandingTrendPoint[]) {
 function DriverTable({ rows }: { rows: DriverStandingRow[] }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-[var(--border)]">
-      <table className="w-full min-w-[520px] table-fixed border-collapse">
+      <table className="w-full min-w-[560px] table-fixed border-collapse">
         <thead>
           <tr className="bg-[var(--bg-2)] text-xs text-[var(--muted)]">
-            <th className="w-12 px-3 py-3 text-center font-bold">순위</th>
+            <th className="w-14 px-3 py-3 text-center font-bold">순위</th>
             <th className="px-3 py-3 text-left font-bold">드라이버</th>
             <th className="w-32 px-3 py-3 text-left font-bold">팀</th>
-            <th className="w-16 px-3 py-3 text-center font-bold">승</th>
+            <th className="w-16 px-3 py-3 text-center font-bold">포디움</th>
+            <th className="w-12 px-3 py-3 text-center font-bold">승</th>
             <th className="w-20 px-3 py-3 text-center font-bold">포인트</th>
           </tr>
         </thead>
         <tbody>
           {rows.map(row => (
             <tr key={row.driverId} className="border-t border-[var(--border)] transition-colors hover:bg-[var(--bg-2)]">
-              <td className={`px-3 py-3 text-center text-sm font-black ${positionClass(row.position)}`}>
-                {positionLabel(row.position)}
+              <td className="px-3 py-3 text-center">
+                <span className={`block text-sm font-black ${positionClass(row.position)}`}>
+                  {positionLabel(row.position)}
+                </span>
+                <PositionChange change={row.positionChange} />
               </td>
               <td className="px-3 py-3">
                 <div className="flex min-w-0 items-center gap-2">
@@ -98,6 +109,7 @@ function DriverTable({ rows }: { rows: DriverStandingRow[] }) {
                   <span className="truncate text-xs font-bold text-[var(--muted)]">{row.team}</span>
                 </div>
               </td>
+              <td className="px-3 py-3 text-center text-sm font-bold text-[var(--text)]">{row.podiums ?? 0}</td>
               <td className="px-3 py-3 text-center text-sm font-bold text-[var(--text)]">{row.wins}</td>
               <td className="px-3 py-3 text-center text-sm font-black text-[var(--text)]">{row.points}</td>
             </tr>
@@ -111,20 +123,24 @@ function DriverTable({ rows }: { rows: DriverStandingRow[] }) {
 function ConstructorTable({ rows }: { rows: ConstructorStandingRow[] }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-[var(--border)]">
-      <table className="w-full min-w-[420px] table-fixed border-collapse">
+      <table className="w-full min-w-[440px] table-fixed border-collapse">
         <thead>
           <tr className="bg-[var(--bg-2)] text-xs text-[var(--muted)]">
-            <th className="w-12 px-3 py-3 text-center font-bold">순위</th>
+            <th className="w-14 px-3 py-3 text-center font-bold">순위</th>
             <th className="px-3 py-3 text-left font-bold">컨스트럭터</th>
-            <th className="w-16 px-3 py-3 text-center font-bold">승</th>
+            <th className="w-16 px-3 py-3 text-center font-bold">포디움</th>
+            <th className="w-12 px-3 py-3 text-center font-bold">승</th>
             <th className="w-20 px-3 py-3 text-center font-bold">포인트</th>
           </tr>
         </thead>
         <tbody>
           {rows.map(row => (
             <tr key={row.constructorId} className="border-t border-[var(--border)] transition-colors hover:bg-[var(--bg-2)]">
-              <td className={`px-3 py-3 text-center text-sm font-black ${positionClass(row.position)}`}>
-                {positionLabel(row.position)}
+              <td className="px-3 py-3 text-center">
+                <span className={`block text-sm font-black ${positionClass(row.position)}`}>
+                  {positionLabel(row.position)}
+                </span>
+                <PositionChange change={row.positionChange} />
               </td>
               <td className="px-3 py-3">
                 <div className="flex min-w-0 items-center gap-2">
@@ -142,6 +158,7 @@ function ConstructorTable({ rows }: { rows: ConstructorStandingRow[] }) {
                   </div>
                 </div>
               </td>
+              <td className="px-3 py-3 text-center text-sm font-bold text-[var(--text)]">{row.podiums ?? 0}</td>
               <td className="px-3 py-3 text-center text-sm font-bold text-[var(--text)]">{row.wins}</td>
               <td className="px-3 py-3 text-center text-sm font-black text-[var(--text)]">{row.points}</td>
             </tr>
@@ -153,7 +170,6 @@ function ConstructorTable({ rows }: { rows: ConstructorStandingRow[] }) {
 }
 
 function TrendCard({ group }: { group: StandingTrendGroup }) {
-  const latest = group.points.at(-1)
   const best = bestPosition(group.points)
   const championships = group.points.filter(point => point.position === 1).length
 
@@ -252,7 +268,7 @@ export default function StandingsClient({ seasons, selectedSeason, drivers, cons
     router.push(`/standings?season=${season}`)
   }
 
-  async function handleTrendSearch(event: FormEvent<HTMLFormElement>) {
+  async function handleTrendSearch(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const query = trendQuery.trim()
 

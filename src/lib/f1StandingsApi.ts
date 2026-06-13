@@ -908,100 +908,195 @@ function getConstructorKrName(name: string, constructorId?: string): string {
 }
 
 export interface DriverStandingRow {
-  position:     number | null
-  driverId:     string
-  code:         string
-  name:         string
-  originalName: string
-  nationality:  string
-  flagCode:     string
-  team:         string
-  teamColor:    string
-  points:       number
-  wins:         number
+  position:       number | null
+  driverId:       string
+  code:           string
+  name:           string
+  originalName:   string
+  nationality:    string
+  flagCode:       string
+  team:           string
+  teamColor:      string
+  points:         number
+  wins:           number
+  positionChange?: number | null
+  podiums?:        number
 }
 
 export interface ConstructorStandingRow {
-  position:      number | null
-  constructorId: string
-  name:          string
-  originalName:  string
-  nationality:   string
-  flagCode:      string
-  teamColor:     string
-  points:        number
-  wins:          number
+  position:       number | null
+  constructorId:  string
+  name:           string
+  originalName:   string
+  nationality:    string
+  flagCode:       string
+  teamColor:      string
+  points:         number
+  wins:           number
+  positionChange?: number | null
+  podiums?:        number
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parseDriverRow(s: any): DriverStandingRow {
+  const originalName = `${s.Driver.givenName} ${s.Driver.familyName}`
+  const krName = getDriverKrName(originalName, s.Driver.driverId)
+  const teamRaw: string = s.Constructors?.[0]?.name ?? ''
+  const teamKr = getConstructorKrName(teamRaw, s.Constructors?.[0]?.constructorId)
+  return {
+    position:    s.position ? Number(s.position) : null,
+    driverId:    s.Driver.driverId,
+    code:        s.Driver.code ?? '',
+    name:        krName,
+    originalName,
+    nationality: s.Driver.nationality ?? '',
+    flagCode:    NATIONALITY_FLAGS[s.Driver.nationality] ?? '',
+    team:        teamKr,
+    teamColor:   TEAM_COLORS[teamKr] ?? '#888888',
+    points:      Number(s.points),
+    wins:        Number(s.wins),
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parseConstructorRow(s: any): ConstructorStandingRow {
+  const originalName: string = s.Constructor.name
+  const nameKr = getConstructorKrName(originalName, s.Constructor.constructorId)
+  return {
+    position:      s.position ? Number(s.position) : null,
+    constructorId: s.Constructor.constructorId,
+    name:          nameKr,
+    originalName,
+    nationality:   s.Constructor.nationality ?? '',
+    flagCode:      NATIONALITY_FLAGS[s.Constructor.nationality] ?? '',
+    teamColor:     TEAM_COLORS[nameKr] ?? '#888888',
+    points:        Number(s.points),
+    wins:          Number(s.wins),
+  }
+}
+
+async function fetchDriverStandingsRaw(year: number, round?: number): Promise<{ round: number; rows: DriverStandingRow[] } | null> {
+  try {
+    const path = round != null ? `${year}/${round}/driverStandings.json` : `${year}/driverStandings.json`
+    const res = await fetch(`https://api.jolpi.ca/ergast/f1/${path}?limit=200`, { next: { revalidate: 3600 } })
+    if (!res.ok) return null
+    const data = await res.json()
+    const list = data.MRData?.StandingsTable?.StandingsLists?.[0]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const standings: any[] = list?.DriverStandings
+    if (!standings?.length) return null
+    return { round: Number(list?.round ?? 0), rows: standings.map(parseDriverRow) }
+  } catch {
+    return null
+  }
+}
+
+async function fetchConstructorStandingsRaw(year: number, round?: number): Promise<{ round: number; rows: ConstructorStandingRow[] } | null> {
+  try {
+    const path = round != null ? `${year}/${round}/constructorStandings.json` : `${year}/constructorStandings.json`
+    const res = await fetch(`https://api.jolpi.ca/ergast/f1/${path}?limit=200`, { next: { revalidate: 3600 } })
+    if (!res.ok) return null
+    const data = await res.json()
+    const list = data.MRData?.StandingsTable?.StandingsLists?.[0]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const standings: any[] = list?.ConstructorStandings
+    if (!standings?.length) return null
+    return { round: Number(list?.round ?? 0), rows: standings.map(parseConstructorRow) }
+  } catch {
+    return null
+  }
+}
+
+async function fetchPodiumCounts(year: number): Promise<{ drivers: Record<string, number>; constructors: Record<string, number> } | null> {
+  try {
+    const res = await fetch(`https://api.jolpi.ca/ergast/f1/${year}/results.json?limit=1000`, { next: { revalidate: 3600 } })
+    if (!res.ok) return null
+    const data = await res.json()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const races: any[] = data.MRData?.RaceTable?.Races ?? []
+    const drivers: Record<string, number> = {}
+    const constructors: Record<string, number> = {}
+    for (const race of races) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      for (const result of (race.Results ?? []) as any[]) {
+        const pos = Number(result.position)
+        if (pos >= 1 && pos <= 3) {
+          const dId: string = result.Driver?.driverId
+          const cId: string = result.Constructor?.constructorId
+          if (dId) drivers[dId] = (drivers[dId] ?? 0) + 1
+          if (cId) constructors[cId] = (constructors[cId] ?? 0) + 1
+        }
+      }
+    }
+    return { drivers, constructors }
+  } catch {
+    return null
+  }
 }
 
 export async function fetchDriverStandings(year: number, round?: number): Promise<DriverStandingRow[] | null> {
-  try {
-    const path = round != null
-      ? `${year}/${round}/driverStandings.json`
-      : `${year}/driverStandings.json`
-    const res = await fetch(
-      `https://api.jolpi.ca/ergast/f1/${path}?limit=200`,
-      { next: { revalidate: 3600 } },
-    )
-    if (!res.ok) return null
-    const data = await res.json()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const standings: any[] = data.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings
-    if (!standings?.length) return null
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return standings.map((s: any): DriverStandingRow => {
-      const originalName = `${s.Driver.givenName} ${s.Driver.familyName}`
-      const krName = getDriverKrName(originalName, s.Driver.driverId)
-      const teamRaw: string = s.Constructors?.[0]?.name ?? ''
-      const teamKr = getConstructorKrName(teamRaw, s.Constructors?.[0]?.constructorId)
-      return {
-        position:     s.position ? Number(s.position) : null,
-        driverId:     s.Driver.driverId,
-        code:         s.Driver.code ?? '',
-        name:         krName,
-        originalName,
-        nationality:  s.Driver.nationality ?? '',
-        flagCode:     NATIONALITY_FLAGS[s.Driver.nationality] ?? '',
-        team:         teamKr,
-        teamColor:    TEAM_COLORS[teamKr] ?? '#888888',
-        points:       Number(s.points),
-        wins:         Number(s.wins),
-      }
-    })
-  } catch {
-    return null
-  }
+  const result = await fetchDriverStandingsRaw(year, round)
+  return result?.rows ?? null
 }
 
-export async function fetchConstructorStandings(year: number): Promise<ConstructorStandingRow[] | null> {
-  try {
-    const res = await fetch(
-      `https://api.jolpi.ca/ergast/f1/${year}/constructorStandings.json?limit=200`,
-      { next: { revalidate: 3600 } },
-    )
-    if (!res.ok) return null
-    const data = await res.json()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const standings: any[] = data.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings
-    if (!standings?.length) return null
+export async function fetchConstructorStandings(year: number, round?: number): Promise<ConstructorStandingRow[] | null> {
+  const result = await fetchConstructorStandingsRaw(year, round)
+  return result?.rows ?? null
+}
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return standings.map((s: any): ConstructorStandingRow => {
-      const originalName: string = s.Constructor.name
-      const nameKr = getConstructorKrName(originalName, s.Constructor.constructorId)
-      return {
-        position:      s.position ? Number(s.position) : null,
-        constructorId: s.Constructor.constructorId,
-        name:          nameKr,
-        originalName,
-        nationality:   s.Constructor.nationality ?? '',
-        flagCode:      NATIONALITY_FLAGS[s.Constructor.nationality] ?? '',
-        teamColor:     TEAM_COLORS[nameKr] ?? '#888888',
-        points:        Number(s.points),
-        wins:          Number(s.wins),
-      }
-    })
-  } catch {
-    return null
+export async function fetchEnrichedStandings(year: number): Promise<{
+  drivers: DriverStandingRow[] | null
+  constructors: ConstructorStandingRow[] | null
+}> {
+  const isConstructorYear = year >= 1958
+
+  const [driverResult, constructorResult, podiumCounts] = await Promise.all([
+    fetchDriverStandingsRaw(year),
+    isConstructorYear ? fetchConstructorStandingsRaw(year) : Promise.resolve(null),
+    fetchPodiumCounts(year),
+  ])
+
+  if (!driverResult) return { drivers: null, constructors: constructorResult?.rows ?? null }
+
+  const currentRound = driverResult.round
+  let prevDriverRows: DriverStandingRow[] | null = null
+  let prevConstructorRows: ConstructorStandingRow[] | null = null
+
+  if (currentRound > 1) {
+    ;[prevDriverRows, prevConstructorRows] = await Promise.all([
+      fetchDriverStandings(year, currentRound - 1),
+      isConstructorYear && constructorResult ? fetchConstructorStandings(year, currentRound - 1) : Promise.resolve(null),
+    ])
   }
+
+  const prevDriverPos = new Map<string, number | null>(
+    (prevDriverRows ?? []).map(r => [r.driverId, r.position])
+  )
+  const prevConstructorPos = new Map<string, number | null>(
+    (prevConstructorRows ?? []).map(r => [r.constructorId, r.position])
+  )
+
+  const drivers = driverResult.rows.map(r => ({
+    ...r,
+    positionChange:
+      r.position !== null && prevDriverPos.has(r.driverId) && prevDriverPos.get(r.driverId) !== null
+        ? (prevDriverPos.get(r.driverId) as number) - r.position
+        : null,
+    podiums: podiumCounts?.drivers[r.driverId] ?? 0,
+  }))
+
+  const constructors = constructorResult
+    ? constructorResult.rows.map(r => ({
+        ...r,
+        positionChange:
+          r.position !== null &&
+          prevConstructorPos.has(r.constructorId) &&
+          prevConstructorPos.get(r.constructorId) !== null
+            ? (prevConstructorPos.get(r.constructorId) as number) - r.position
+            : null,
+        podiums: podiumCounts?.constructors[r.constructorId] ?? 0,
+      }))
+    : null
+
+  return { drivers, constructors }
 }
