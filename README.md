@@ -166,11 +166,12 @@ UPDATE news_translations SET is_published = true;
 
 ### 📊 순위 (`/standings`)
 - 드라이버 / 컨스트럭터 현 시즌 + 역대 시즌 드릴다운
-- 이름 검색 API (`/api/standings/search`)
+- 이름 검색 API (`/api/standings/search`)->*배시와 77개 시즌 모두 한번에 데이터를 찾으러 가기 때문에 검색 오래걸림으로 인해 차단 이슈 가능성
 
 ### 🗳 팬 투표 (`/prediction`)
 - localStorage 기반 — 단일 선택 · 복수 선택 · 순위 선택(1·2·3위) 3종 질문 유형
 - 제출 후 잠금, 초기화 버튼 포함
+- 팀, 드라이버별 상징 색깔 바 추가로 UI 개선
 
 ### 🔐 인증 (Auth)
 - Google · Kakao OAuth (Auth.js v5, JWT 전략)
