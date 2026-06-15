@@ -165,13 +165,61 @@ UPDATE news_translations SET is_published = true;
 - 서킷 이미지 25개 수록
 
 ### 📊 순위 (`/standings`)
-- 드라이버 / 컨스트럭터 현 시즌 + 역대 시즌 드릴다운
-- 이름 검색 API (`/api/standings/search`)->*배시와 77개 시즌 모두 한번에 데이터를 찾으러 가기 때문에 검색 오래걸림으로 인해 차단 이슈 가능성
+
+#### 현 시즌 순위 테이블
+- 드라이버 / 컨스트럭터 탭 전환
+- **포디움 컬럼**: 레이스 결과 API에서 P1~P3 집계, 당시 우승 횟수와 별도 표시
+- **순위 변동**: 이전 라운드 대비 ▲N(초록) / ▼N(빨강) / —(동일) 표시 — 현 라운드와 직전 라운드 standings를 병렬 호출해 비교
+- 팀 컬러 도트, 국기 아이콘, 드라이버 코드(예: VER) 표시
+- 한글 이름 단독 표시 (영문 병기 제거)
+- 컨스트럭터 챔피언십 시작 연도(1958) 이전 시즌 선택 시 탭 비활성 + 안내
+- 스켈레톤 로딩 UI (`loading.tsx`)
+
+#### 역대 시즌 검색 (`/api/standings/search`)
+
+**현재 아키텍처 (Supabase 캐시 기반):**
+- 1950~현재 전 시즌 드라이버/컨스트럭터 순위 데이터를 Supabase `f1_standings` 테이블에 사전 저장
+- 검색 쿼리는 외부 API 호출 없이 Supabase에서 직접 조회 → 수십 ms 내 응답
+
+**기존 구조 (Jolpica API 직접 호출)와 비교:**
+```
+기존: 검색 시마다 77시즌 × 2개 API(드라이버+컨스트럭터) = ~150 API 호출 → ~70초
+현재: Supabase 쿼리 1회 → 수십 ms
+```
+
+**데이터 초기화 (`npm run seed:standings`):**
+```bash
+# 1950~현재 전 시즌 데이터를 Supabase에 일괄 저장 (최초 1회 실행)
+npm run seed:standings
+```
+- 시즌별 순차 처리 + 요청 간 600ms 딜레이 + 최대 3회 재시도로 Jolpica API rate limit 회피
+- upsert 방식이므로 재실행 시 기존 데이터 안전하게 덮어씀
+- 시즌 종료 후 신규 연도 데이터 갱신 시 재실행
+
+**검색 병렬 처리 (현재):**
+- 1900s(1950~1999)와 2000s(2000~현재)를 `Promise.all`로 동시 처리
+- 두 시대 모두 활동한 드라이버/팀은 2000s 그룹에 병합
+
+#### 팀 컬러 시스템
+- `src/data/f1-2026.ts`를 단일 소스(Single Source of Truth)로 지정
+- 순위 API(`f1StandingsApi.ts`, `f1ResultsApi.ts`)의 `TEAM_COLORS`를 완전 동기화
+- 아우디 색상 오류(형광초록 `#00E701` → `#9E9E9E`) 등 누적 오탈자 일괄 수정
 
 ### 🗳 팬 투표 (`/prediction`)
-- localStorage 기반 — 단일 선택 · 복수 선택 · 순위 선택(1·2·3위) 3종 질문 유형
+- Supabase `season_predictions` 테이블에 시즌 단위 저장 (로그인 기반)
+- 단일 선택 · 복수 선택 · 순위 선택(1·2·3위) 3종 질문 유형
 - 제출 후 잠금, 초기화 버튼 포함
 - 팀, 드라이버별 상징 색깔 바 추가로 UI 개선
+
+#### 팀 컬러 시각화
+- 2026 시즌 전체 드라이버 24명 + 팀 11개의 공식 팀 컬러 정의 (`src/data/f1-2026.ts`)
+- **미선택 상태**: 선택지 왼쪽에 3px 팀 컬러 바
+- **선택 상태**: 팀 컬러 배경 틴트 + 테두리 + 텍스트 컬러 하이라이트
+- Tailwind 동적 클래스 제한으로 인해 색상은 인라인 `style` prop으로 적용
+
+#### 선택 UX 개선
+- **단일 선택 질문(Q3·5·6·7·8·9)**: 동일 항목 재클릭 시 선택 해제(토글)
+- **복수 선택(Q11·12 — 응원팀/드라이버)**: 최대 3개까지 선택 가능, 초과 시 신규 선택 불가
 
 ### 🔐 인증 (Auth)
 - Google · Kakao OAuth (Auth.js v5, JWT 전략)
@@ -188,6 +236,31 @@ UPDATE news_translations SET is_published = true;
 |--------|------|
 | `news_translations` | RSS 기사 캐시 + 한국어 번역 + 승인 상태 저장 |
 | `news_reactions` | 기사별 이모지 반응 (세션 기반) |
+| `season_predictions` | 팬 투표 답변 (user_id + season 복합 키, upsert) |
+| `f1_standings` | 1950~현재 전 시즌 드라이버/컨스트럭터 순위 캐시 — 역대 검색 고속화용 |
+
+### `f1_standings` 스키마
+
+```sql
+CREATE TABLE f1_standings (
+  id            BIGSERIAL PRIMARY KEY,
+  type          TEXT    NOT NULL CHECK (type IN ('driver', 'constructor')),
+  entity_id     TEXT    NOT NULL,   -- driverId 또는 constructorId
+  name          TEXT,               -- 한국어 이름
+  original_name TEXT,               -- 영어 원문 이름
+  year          INT     NOT NULL,
+  position      INT,
+  points        NUMERIC NOT NULL DEFAULT 0,
+  wins          INT     NOT NULL DEFAULT 0,
+  team          TEXT,               -- 드라이버 소속팀 (컨스트럭터는 NULL)
+  team_color    TEXT    NOT NULL DEFAULT '#888888'
+);
+
+CREATE UNIQUE INDEX f1_standings_unique ON f1_standings (type, entity_id, year);
+CREATE        INDEX f1_standings_name   ON f1_standings (name);
+CREATE        INDEX f1_standings_orig   ON f1_standings (original_name);
+CREATE        INDEX f1_standings_entity ON f1_standings (type, entity_id);
+```
 
 ---
 
@@ -195,9 +268,11 @@ UPDATE news_translations SET is_published = true;
 
 | 페이지/API | 전략 | 갱신 조건 |
 |-----------|------|----------|
-| `/news` | ISR 5분 | 관리자 기사 공개 시 즉시 무효화 |
+| `/news` | ISR 5분 | 관리자 기사 공개 시 `revalidatePath` 즉시 무효화 |
 | `/highlights` | ISR 1시간 | 자동 만료 |
-| `/schedules`, `/results`, `/standings` | Jolpica API 응답 기반 | — |
+| `/schedules`, `/results` | Jolpica API `revalidate: 3600` | 자동 만료 |
+| `/standings` (현 시즌) | Jolpica API `revalidate: 3600` + 이전 라운드 비교 | 자동 만료 |
+| `/api/standings/search` | Supabase 쿼리 (캐시 불필요) | `npm run seed:standings` 재실행 시 갱신 |
 
 ---
 
@@ -212,6 +287,9 @@ npm run dev
 
 # 빌드
 npm run build
+
+# 역대 순위 데이터 Supabase에 초기화 (최초 1회 또는 시즌 종료 후 갱신)
+npm run seed:standings
 ```
 
 ### 환경 변수 설정 (`.env.local`)
@@ -225,6 +303,7 @@ AUTH_KAKAO_CLIENT_SECRET=
 YOUTUBE_API_KEY=
 SUPABASE_URL=
 SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=   # seed:standings 및 서버 사이드 DB 쓰기에 필요
 ADMIN_EMAIL=
 NEXT_PUBLIC_ADMIN_EMAIL=
 ```
@@ -251,8 +330,9 @@ NEXT_PUBLIC_ADMIN_EMAIL=
 |--------|------|
 | 홈 (`/`) | 완료 — 다음 레이스 카운트다운, 최신 뉴스/하이라이트 프리뷰, 순위 TOP3, 팬 투표 CTA |
 | 경기 일정 (`/schedules`) | 완료 — 2025/2026 시즌, 라운드별 카드 UI |
-| 팬 투표 (`/prediction`) | 완료 — 3종 질문 유형, 제출 잠금 |
 | 하이라이트 기본 (`/highlights`) | 완료 — 3축 필터, 슬라이더/그리드 뷰, 쇼츠 감지 |
+| 팬 투표 (`/prediction`) | 완료 — 팀 컬러 시각화, 3종 질문 유형, 단일 선택 토글, 복수 선택(최대 3), Supabase 저장 |
+| 순위 (`/standings`) | 완료 — 포디움·순위 변동, Supabase 역대 검색, 팀 컬러 통일, 스켈레톤 로딩 |
 
 ---
 
