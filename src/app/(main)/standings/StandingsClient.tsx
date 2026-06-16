@@ -255,6 +255,14 @@ function TrendCard({ group }: { group: StandingTrendGroup }) {
   )
 }
 
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-2)] px-4 py-8 text-center">
+      <p className="text-sm font-black text-[var(--text)]">{message}</p>
+    </div>
+  )
+}
+
 export default function StandingsClient({ seasons, selectedSeason, drivers, constructors }: Props) {
   const router = useRouter()
   const hasConstructors = !!constructors?.length
@@ -353,7 +361,7 @@ export default function StandingsClient({ seasons, selectedSeason, drivers, cons
           </select>
         </label>
         <p className="text-xs font-bold text-[var(--muted)]">
-          {selectedSeason >= 1950 ? `1950-${new Date().getFullYear()} 시즌 지원` : ''}
+          {`1950-${new Date().getFullYear()} 시즌 지원`}
         </p>
       </div>
 
@@ -398,14 +406,6 @@ export default function StandingsClient({ seasons, selectedSeason, drivers, cons
           <EmptyState message={selectedSeason < 1958 ? '컨스트럭터 챔피언십은 1958년부터 시작했습니다.' : '컨스트럭터 순위 데이터가 없습니다.'} />
         )
       )}
-    </div>
-  )
-}
-
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-2)] px-4 py-8 text-center">
-      <p className="text-sm font-black text-[var(--text)]">{message}</p>
     </div>
   )
 }

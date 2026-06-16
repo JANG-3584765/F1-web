@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  const term = rawQuery.replace(/[%_\\]/g, '\\$&')
+  const term = rawQuery.replace(/[%_\\]/g, '\\$&').replace(/[,()]/g, '')
 
   const { data, error } = await supabaseAdmin
     .from('f1_standings')

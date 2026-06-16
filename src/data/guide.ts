@@ -165,12 +165,12 @@ export const TEAMS_GUIDE: TeamGuide[] = [
     color: '#C41E3A',
     engine: 'Ferrari',
     base: '미국',
-    drivers: ['콜튼 헤르타', '잭 크로포드'],
+    drivers: ['세르히오 페레스', '발테리 보타스'],
     founded: 2026,
     championships: 0,
     tag: '2026 신규 참가',
     description:
-      'GM 캐딜락의 F1 신규 참가팀. 미국인 드라이버 헤르타·크로포드를 기용해 미국 팬들의 열광적인 지지를 받습니다.',
+      'GM 캐딜락의 F1 신규 참가팀. 챔피언 경력의 페레스·보타스를 영입해 첫 시즌부터 경쟁력을 갖추려 합니다.',
   },
 ]
 
