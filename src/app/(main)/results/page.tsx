@@ -11,6 +11,7 @@ import {
   fetchPracticeResult,
   getCircuitInfo,
   type ResultRow,
+  type PitStopMap,
 } from '@/lib/f1ResultsApi'
 import { fetchDriverStandings } from '@/lib/f1StandingsApi'
 import ResultsControls from './ResultsControls'
@@ -35,6 +36,33 @@ function defaultRound(races: Race[]) {
 function formatRaceDate(date: string) {
   const [y, m, d] = date.split('-').map(Number)
   return `${y}. ${m}. ${d}.`
+}
+
+function RaceStats({ rows, pitStopMap }: { rows: ResultRow[]; pitStopMap: PitStopMap | null }) {
+  if (!rows.length) return null
+  const finishers = rows.filter(r => r.classified).length
+  const dnf = rows.filter(r => !r.classified).length
+  const totalPits = pitStopMap
+    ? Object.values(pitStopMap).reduce((sum, d) => sum + d.count, 0)
+    : null
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      <span className="rounded border border-[var(--border)] bg-[var(--bg-2)] px-2.5 py-1 text-xs font-black text-[var(--text)]">
+        완주 {finishers}명
+      </span>
+      {dnf > 0 && (
+        <span className="rounded bg-red-100 px-2.5 py-1 text-xs font-black text-red-700">
+          DNF {dnf}명
+        </span>
+      )}
+      {totalPits != null && (
+        <span className="rounded border border-[var(--border)] bg-[var(--bg-2)] px-2.5 py-1 text-xs font-black text-[var(--text)]">
+          총 피트스탑 {totalPits}회
+        </span>
+      )}
+    </div>
+  )
 }
 
 function Top5({ rows }: { rows: ResultRow[] }) {
@@ -99,13 +127,14 @@ async function SessionDataSection({
   season,
   round,
   allRows,
+  pitStopMap,
 }: {
   season: number
   round: number
   allRows: ResultRow[]
+  pitStopMap: PitStopMap | null
 }) {
-  const [pitStopMap, tireMap, qualifying, sprint, fp1, fp2, fp3, standingsBefore, standingsAfter] = await Promise.all([
-    fetchPitStops(season, round),
+  const [tireMap, qualifying, sprint, fp1, fp2, fp3, standingsBefore, standingsAfter] = await Promise.all([
     fetchTireStrategy(season, round),
     fetchQualifyingResult(season, round),
     fetchSprintResult(season, round),
@@ -163,7 +192,10 @@ export default async function ResultsPage({
     : defaultRound(races)
 
   const raceMeta = races.find(race => race.round === selectedRound)
-  const result = await fetchRaceResult(selectedSeason, selectedRound)
+  const [result, pitStopMap] = await Promise.all([
+    fetchRaceResult(selectedSeason, selectedRound),
+    fetchPitStops(selectedSeason, selectedRound),
+  ])
   const circuitInfo = result?.circuitInfo
     ?? (raceMeta ? getCircuitInfo(raceMeta.circuit) : null)
     ?? null
@@ -253,9 +285,10 @@ export default async function ResultsPage({
             {/* TOP 5 + 탭 영역 */}
             {result ? (
               <div className="flex flex-col gap-4">
+                <RaceStats rows={allRows} pitStopMap={pitStopMap} />
                 <Top5 rows={allRows} />
                 <Suspense fallback={<TabsSkeleton />}>
-                  <SessionDataSection season={selectedSeason} round={selectedRound} allRows={allRows} />
+                  <SessionDataSection season={selectedSeason} round={selectedRound} allRows={allRows} pitStopMap={pitStopMap} />
                 </Suspense>
               </div>
             ) : (

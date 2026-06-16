@@ -66,10 +66,11 @@ function CompoundBadge({ compound }: { compound: string }) {
 function ResultTable({ rows }: { rows: ResultRow[] }) {
   return (
     <div className="overflow-x-auto border border-[var(--border)] rounded-lg">
-      <table className="w-full min-w-[560px] table-fixed border-collapse">
+      <table className="w-full min-w-[620px] table-fixed border-collapse">
         <thead>
           <tr className="bg-[var(--bg-2)] text-xs text-[var(--muted)]">
             <th className="w-14 px-3 py-3 text-center font-bold">순위</th>
+            <th className="w-12 px-3 py-3 text-center font-bold">시작</th>
             <th className="px-3 py-3 text-left font-bold">드라이버</th>
             <th className="w-28 px-3 py-3 text-left font-bold">기록</th>
             <th className="w-16 px-3 py-3 text-center font-bold">랩</th>
@@ -84,6 +85,9 @@ function ResultTable({ rows }: { rows: ResultRow[] }) {
                   <span className="text-sm font-black text-[var(--text)]">{row.position ?? '-'}</span>
                   <RaceChangeBadge grid={row.grid} position={row.position} />
                 </div>
+              </td>
+              <td className="px-3 py-3 text-center text-sm font-bold text-[var(--muted)]">
+                {row.grid > 0 ? row.grid : 'PL'}
               </td>
               <td className="px-3 py-3">
                 <div className="min-w-0">
