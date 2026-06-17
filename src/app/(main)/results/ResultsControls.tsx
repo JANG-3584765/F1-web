@@ -25,23 +25,21 @@ export default function ResultsControls({
 }: Props) {
   const router = useRouter()
   const [localSeason, setLocalSeason] = useState(selectedSeason)
-  const [localRound, setLocalRound] = useState(selectedRound)
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalSeason(selectedSeason)
-    setLocalRound(selectedRound)
-  }, [selectedSeason, selectedRound])
+  }, [selectedSeason])
 
   const currentRaces = allRaces[localSeason] ?? []
 
   function handleSeasonChange(season: number) {
+    const defaultRound = getDefaultRound(allRaces[season] ?? [])
     setLocalSeason(season)
-    setLocalRound(getDefaultRound(allRaces[season] ?? []))
+    router.push(`/results?season=${season}&round=${defaultRound}`)
   }
 
-  function handleSearch() {
-    router.push(`/results?season=${localSeason}&round=${localRound}`)
+  function handleRoundChange(round: number) {
+    router.push(`/results?season=${localSeason}&round=${round}`)
   }
 
   return (
@@ -62,8 +60,8 @@ export default function ResultsControls({
       <label className="flex-1 flex items-center gap-2 text-sm font-bold text-[var(--text)]">
         <span className="whitespace-nowrap">라운드</span>
         <select
-          value={localRound}
-          onChange={e => setLocalRound(Number(e.target.value))}
+          value={selectedRound}
+          onChange={e => handleRoundChange(Number(e.target.value))}
           className="w-full bg-[var(--input-bg)] border border-[var(--border)] rounded-md px-3 py-2 text-sm outline-none focus:border-[var(--accent)]"
         >
           {currentRaces.map(race => (
@@ -73,13 +71,6 @@ export default function ResultsControls({
           ))}
         </select>
       </label>
-
-      <button
-        onClick={handleSearch}
-        className="sm:self-center rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-black text-white hover:opacity-90 transition-opacity"
-      >
-        검색
-      </button>
     </div>
   )
 }
