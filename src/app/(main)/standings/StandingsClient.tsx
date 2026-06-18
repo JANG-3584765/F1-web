@@ -65,14 +65,14 @@ function bestPosition(points: StandingTrendPoint[]) {
 function DriverTable({ rows }: { rows: DriverStandingRow[] }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-[var(--border)]">
-      <table className="w-full min-w-[400px] table-fixed border-collapse">
+      <table className="w-full min-w-[350px] table-fixed border-collapse">
         <thead>
           <tr className="bg-[var(--bg-2)] text-xs text-[var(--muted)]">
             <th className="w-14 px-3 py-3 text-center font-bold">순위</th>
             <th className="px-3 py-3 text-left font-bold">드라이버</th>
-            <th className="w-20 px-3 py-3 text-center font-bold">포인트</th>
-            <th className="w-12 px-3 py-3 text-center font-bold">승</th>
-            <th className="w-16 px-3 py-3 text-center font-bold">포디움</th>
+            <th className="w-16 border-l border-[var(--border)] px-2 py-3 text-center font-bold">포인트</th>
+            <th className="w-10 border-l border-[var(--border)] px-2 py-3 text-center font-bold">승</th>
+            <th className="w-12 border-l border-[var(--border)] px-2 py-3 text-center font-bold">포디움</th>
           </tr>
         </thead>
         <tbody>
@@ -101,9 +101,9 @@ function DriverTable({ rows }: { rows: DriverStandingRow[] }) {
                   </div>
                 </div>
               </td>
-              <td className="px-3 py-3 text-center text-sm font-black text-[var(--text)]">{row.points}</td>
-              <td className="px-3 py-3 text-center text-sm font-bold text-[var(--text)]">{row.wins}</td>
-              <td className="px-3 py-3 text-center text-sm font-bold text-[var(--text)]">{row.podiums ?? 0}</td>
+              <td className="border-l border-[var(--border)] px-2 py-3 text-center text-sm font-black text-[var(--text)]">{row.points}</td>
+              <td className="border-l border-[var(--border)] px-2 py-3 text-center text-sm font-bold text-[var(--text)]">{row.wins}</td>
+              <td className="border-l border-[var(--border)] px-2 py-3 text-center text-sm font-bold text-[var(--text)]">{row.podiums ?? 0}</td>
             </tr>
           ))}
         </tbody>
@@ -115,14 +115,14 @@ function DriverTable({ rows }: { rows: DriverStandingRow[] }) {
 function ConstructorTable({ rows }: { rows: ConstructorStandingRow[] }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-[var(--border)]">
-      <table className="w-full min-w-[400px] table-fixed border-collapse">
+      <table className="w-full min-w-[350px] table-fixed border-collapse">
         <thead>
           <tr className="bg-[var(--bg-2)] text-xs text-[var(--muted)]">
             <th className="w-14 px-3 py-3 text-center font-bold">순위</th>
             <th className="px-3 py-3 text-left font-bold">컨스트럭터</th>
-            <th className="w-20 px-3 py-3 text-center font-bold">포인트</th>
-            <th className="w-12 px-3 py-3 text-center font-bold">승</th>
-            <th className="w-16 px-3 py-3 text-center font-bold">포디움</th>
+            <th className="w-16 border-l border-[var(--border)] px-2 py-3 text-center font-bold">포인트</th>
+            <th className="w-10 border-l border-[var(--border)] px-2 py-3 text-center font-bold">승</th>
+            <th className="w-12 border-l border-[var(--border)] px-2 py-3 text-center font-bold">포디움</th>
           </tr>
         </thead>
         <tbody>
@@ -150,9 +150,9 @@ function ConstructorTable({ rows }: { rows: ConstructorStandingRow[] }) {
                   </div>
                 </div>
               </td>
-              <td className="px-3 py-3 text-center text-sm font-black text-[var(--text)]">{row.points}</td>
-              <td className="px-3 py-3 text-center text-sm font-bold text-[var(--text)]">{row.wins}</td>
-              <td className="px-3 py-3 text-center text-sm font-bold text-[var(--text)]">{row.podiums ?? 0}</td>
+              <td className="border-l border-[var(--border)] px-2 py-3 text-center text-sm font-black text-[var(--text)]">{row.points}</td>
+              <td className="border-l border-[var(--border)] px-2 py-3 text-center text-sm font-bold text-[var(--text)]">{row.wins}</td>
+              <td className="border-l border-[var(--border)] px-2 py-3 text-center text-sm font-bold text-[var(--text)]">{row.podiums ?? 0}</td>
             </tr>
           ))}
         </tbody>
