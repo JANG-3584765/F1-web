@@ -8,6 +8,16 @@ import type {
 
 // ===== 공통 =====
 
+export interface ConstructorChange {
+  constructorId: string
+  name: string
+  teamColor: string
+  currentPosition: number | null
+  previousPosition: number | null
+  currentPoints: number
+  pointsGained: number
+}
+
 export interface StandingChange {
   driverId: string
   name: string
@@ -290,6 +300,51 @@ function PitStopSection({ rows, pitStopMap }: { rows: ResultRow[]; pitStopMap: P
   )
 }
 
+// ===== 컨스트럭터 변동 =====
+
+function ConstructorChangeSection({ changes }: { changes: ConstructorChange[] }) {
+  const hasPrev = changes.some(c => c.previousPosition != null)
+  return (
+    <div className="overflow-x-auto border border-[var(--border)] rounded-lg">
+      <table className="w-full min-w-[380px] border-collapse">
+        <thead>
+          <tr className="bg-[var(--bg-2)] text-xs text-[var(--muted)]">
+            <th className="w-20 px-3 py-3 text-center font-bold">순위</th>
+            <th className="px-3 py-3 text-left font-bold">컨스트럭터</th>
+            <th className="w-20 px-3 py-3 text-center font-bold">포인트</th>
+            <th className="w-16 px-3 py-3 text-center font-bold">획득</th>
+          </tr>
+        </thead>
+        <tbody>
+          {changes.map(c => (
+            <tr key={c.constructorId} className="border-t border-[var(--border)]">
+              <td className="px-3 py-3 text-center">
+                <div className="flex flex-col items-center gap-0.5">
+                  <span className="text-sm font-black text-[var(--text)]">{c.currentPosition ?? '-'}</span>
+                  {hasPrev && <ChampChangeBadge current={c.currentPosition} previous={c.previousPosition} />}
+                </div>
+              </td>
+              <td className="px-3 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="h-3 w-1 shrink-0 rounded-full" style={{ backgroundColor: c.teamColor }} />
+                  <span className="text-sm font-black text-[var(--text)] truncate">{c.name}</span>
+                </div>
+              </td>
+              <td className="px-3 py-3 text-center text-sm font-black text-[var(--text)]">{c.currentPoints}</td>
+              <td className="px-3 py-3 text-center text-sm font-bold">
+                {c.pointsGained > 0
+                  ? <span className="font-black text-green-600">+{c.pointsGained}</span>
+                  : <span className="text-[var(--muted)]">0</span>
+                }
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 // ===== 챔피언십 변동 =====
 
 function StandingChangeSection({ changes }: { changes: StandingChange[] }) {
@@ -391,7 +446,7 @@ function TireStrategySection({ rows, tireMap }: { rows: ResultRow[]; tireMap: Ti
 
 // ===== 탭 메인 =====
 
-const ALL_TABS = ['FP1', 'FP2', 'FP3', '퀄리파잉', '스프린트', '전체 결과', '피트스탑', '타이어 전략', '챔피언십 변동'] as const
+const ALL_TABS = ['FP1', 'FP2', 'FP3', '퀄리파잉', '스프린트', '전체 결과', '피트스탑', '타이어 전략', '챔피언십 변동', '컨스트럭터 변동'] as const
 type Tab = typeof ALL_TABS[number]
 
 interface Props {
@@ -404,9 +459,10 @@ interface Props {
   fp2: PracticeRow[] | null
   fp3: PracticeRow[] | null
   standingChanges: StandingChange[] | null
+  constructorChanges: ConstructorChange[] | null
 }
 
-export default function ResultTabs({ allRows, pitStopMap, tireMap, qualifying, sprint, fp1, fp2, fp3, standingChanges }: Props) {
+export default function ResultTabs({ allRows, pitStopMap, tireMap, qualifying, sprint, fp1, fp2, fp3, standingChanges, constructorChanges }: Props) {
   const availableTabs = useMemo(() => ALL_TABS.filter(tab => {
     if (tab === 'FP1') return !!fp1
     if (tab === 'FP2') return !!fp2
@@ -416,8 +472,9 @@ export default function ResultTabs({ allRows, pitStopMap, tireMap, qualifying, s
     if (tab === '피트스탑') return !!pitStopMap
     if (tab === '타이어 전략') return !!tireMap
     if (tab === '챔피언십 변동') return !!standingChanges?.length
+    if (tab === '컨스트럭터 변동') return !!constructorChanges?.length
     return true
-  }), [fp1, fp2, fp3, qualifying, sprint, pitStopMap, tireMap, standingChanges])
+  }), [fp1, fp2, fp3, qualifying, sprint, pitStopMap, tireMap, standingChanges, constructorChanges])
 
   const [activeTab, setActiveTab] = useState<Tab>('전체 결과')
   const currentTab = availableTabs.includes(activeTab) ? activeTab : '전체 결과'
@@ -455,6 +512,7 @@ export default function ResultTabs({ allRows, pitStopMap, tireMap, qualifying, s
       {currentTab === '피트스탑' && pitStopMap && <PitStopSection rows={allRows} pitStopMap={pitStopMap} />}
       {currentTab === '타이어 전략' && tireMap && <TireStrategySection rows={allRows} tireMap={tireMap} />}
       {currentTab === '챔피언십 변동' && standingChanges && <StandingChangeSection changes={standingChanges} />}
+      {currentTab === '컨스트럭터 변동' && constructorChanges && <ConstructorChangeSection changes={constructorChanges} />}
     </div>
   )
 }

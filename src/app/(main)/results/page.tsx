@@ -9,13 +9,15 @@ import {
   fetchQualifyingResult,
   fetchSprintResult,
   fetchPracticeResult,
+  fetchRaceWeather,
   getCircuitInfo,
   type ResultRow,
   type PitStopMap,
+  type RaceWeather,
 } from '@/lib/f1ResultsApi'
-import { fetchDriverStandings } from '@/lib/f1StandingsApi'
+import { fetchDriverStandings, fetchConstructorStandings } from '@/lib/f1StandingsApi'
 import ResultsControls from './ResultsControls'
-import ResultTabs, { type StandingChange } from './ResultTabs'
+import ResultTabs, { type StandingChange, type ConstructorChange } from './ResultTabs'
 
 const SEASONS = [2026, 2025]
 
@@ -38,7 +40,93 @@ function formatRaceDate(date: string) {
   return `${y}. ${m}. ${d}.`
 }
 
-function RaceStats({ rows, pitStopMap }: { rows: ResultRow[]; pitStopMap: PitStopMap | null }) {
+function getFastestPitStop(
+  pitStopMap: PitStopMap,
+  rows: ResultRow[],
+): { name: string; lap: number; duration: string } | null {
+  let fastest: { driverId: string; lap: number; duration: string; sec: number } | null = null
+  for (const [driverId, data] of Object.entries(pitStopMap)) {
+    for (const stop of data.stops) {
+      const sec = parseFloat(stop.duration)
+      if (!isNaN(sec) && (fastest === null || sec < fastest.sec)) {
+        fastest = { driverId, lap: stop.lap, duration: stop.duration, sec }
+      }
+    }
+  }
+  if (!fastest) return null
+  const driver = rows.find(r => r.driverId === fastest!.driverId)
+  return driver ? { name: driver.name, lap: fastest.lap, duration: fastest.duration } : null
+}
+
+function WinnerCard({ row }: { row: ResultRow }) {
+  return (
+    <div
+      className="rounded-lg p-4"
+      style={{
+        background: `linear-gradient(135deg, ${row.teamColor}22 0%, transparent 70%)`,
+        borderLeft: `3px solid ${row.teamColor}`,
+      }}
+    >
+      <p className="text-[10px] font-black uppercase tracking-widest text-[var(--muted)]">레이스 우승</p>
+      <p className="mt-0.5 text-2xl font-black text-[var(--text)]">{row.name}</p>
+      <div className="mt-1 flex items-center gap-2">
+        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: row.teamColor }} />
+        <span className="text-sm font-bold text-[var(--muted)]">{row.team}</span>
+        {row.fastestLap && (
+          <span className="rounded bg-purple-100 px-1.5 py-0.5 text-[10px] font-black text-purple-700">FL</span>
+        )}
+      </div>
+      <div className="mt-2 flex gap-4 text-xs font-bold text-[var(--muted)]">
+        {row.timeOrGap && row.timeOrGap !== '완주' && <span>{row.timeOrGap}</span>}
+        <span>+{row.points} pts</span>
+      </div>
+    </div>
+  )
+}
+
+function WeatherCard({ weather }: { weather: RaceWeather }) {
+  return (
+    <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
+      <p className="mb-3 text-xs font-black text-[var(--muted)]">레이스 당일 날씨</p>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <div className="rounded-md bg-[var(--bg-2)] px-3 py-2">
+          <p className="text-[10px] font-bold text-[var(--muted)]">기온</p>
+          <p className="text-sm font-black text-[var(--text)]">{weather.minTempC}°C ~ {weather.maxTempC}°C</p>
+        </div>
+        <div className="rounded-md bg-[var(--bg-2)] px-3 py-2">
+          <p className="text-[10px] font-bold text-[var(--muted)]">습도</p>
+          <p className="text-sm font-black text-[var(--text)]">{weather.humidity}%</p>
+        </div>
+        <div className="rounded-md bg-[var(--bg-2)] px-3 py-2">
+          <p className="text-[10px] font-bold text-[var(--muted)]">최대 풍속</p>
+          <p className="text-sm font-black text-[var(--text)]">{weather.maxWindKph} km/h</p>
+        </div>
+        <div className="rounded-md bg-[var(--bg-2)] px-3 py-2">
+          <p className="text-[10px] font-bold text-[var(--muted)]">강수량</p>
+          <p className="text-sm font-black text-[var(--text)]">{weather.precipMm} mm</p>
+        </div>
+        {weather.precipProb != null && (
+          <div className="rounded-md bg-[var(--bg-2)] px-3 py-2">
+            <p className="text-[10px] font-bold text-[var(--muted)]">강수 확률</p>
+            <p className="text-sm font-black text-[var(--text)]">{weather.precipProb}%</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function RaceStats({
+  rows,
+  pitStopMap,
+  fastestPit,
+  pole,
+}: {
+  rows: ResultRow[]
+  pitStopMap: PitStopMap | null
+  fastestPit?: { name: string; lap: number; duration: string } | null
+  pole?: string | null
+}) {
   if (!rows.length) return null
   const finishers = rows.filter(r => r.classified).length
   const dnf = rows.filter(r => !r.classified).length
@@ -59,6 +147,16 @@ function RaceStats({ rows, pitStopMap }: { rows: ResultRow[]; pitStopMap: PitSto
       {totalPits != null && (
         <span className="rounded border border-[var(--border)] bg-[var(--bg-2)] px-2.5 py-1 text-xs font-black text-[var(--text)]">
           총 피트스탑 {totalPits}회
+        </span>
+      )}
+      {fastestPit && (
+        <span className="rounded border border-[var(--border)] bg-[var(--bg-2)] px-2.5 py-1 text-xs font-black text-[var(--text)]">
+          패스티스트 피트: {fastestPit.name} · {fastestPit.duration}s ({fastestPit.lap}랩)
+        </span>
+      )}
+      {pole && (
+        <span className="rounded border border-[var(--border)] bg-[var(--bg-2)] px-2.5 py-1 text-xs font-black text-[var(--text)]">
+          폴: {pole}
         </span>
       )}
     </div>
@@ -128,21 +226,24 @@ async function SessionDataSection({
   round,
   allRows,
   pitStopMap,
+  qualifying,
 }: {
   season: number
   round: number
   allRows: ResultRow[]
   pitStopMap: PitStopMap | null
+  qualifying: Awaited<ReturnType<typeof fetchQualifyingResult>>
 }) {
-  const [tireMap, qualifying, sprint, fp1, fp2, fp3, standingsBefore, standingsAfter] = await Promise.all([
+  const [tireMap, sprint, fp1, fp2, fp3, standingsBefore, standingsAfter, constructorsBefore, constructorsAfter] = await Promise.all([
     fetchTireStrategy(season, round),
-    fetchQualifyingResult(season, round),
     fetchSprintResult(season, round),
     fetchPracticeResult(season, round, 1),
     fetchPracticeResult(season, round, 2),
     fetchPracticeResult(season, round, 3),
     fetchDriverStandings(season, round - 1),
     fetchDriverStandings(season, round),
+    fetchConstructorStandings(season, round - 1),
+    fetchConstructorStandings(season, round),
   ])
 
   let standingChanges: StandingChange[] | null = null
@@ -161,6 +262,20 @@ async function SessionDataSection({
     }))
   }
 
+  let constructorChanges: ConstructorChange[] | null = null
+  if (constructorsAfter?.length) {
+    const beforeMap = new Map(constructorsBefore?.map(c => [c.constructorId, c]) ?? [])
+    constructorChanges = constructorsAfter.map(after => ({
+      constructorId: after.constructorId,
+      name: after.name,
+      teamColor: after.teamColor,
+      currentPosition: after.position,
+      previousPosition: beforeMap.get(after.constructorId)?.position ?? null,
+      currentPoints: after.points,
+      pointsGained: after.points - (beforeMap.get(after.constructorId)?.points ?? after.points),
+    }))
+  }
+
   return (
     <ResultTabs
       allRows={allRows}
@@ -172,6 +287,7 @@ async function SessionDataSection({
       fp2={fp2}
       fp3={fp3}
       standingChanges={standingChanges}
+      constructorChanges={constructorChanges}
     />
   )
 }
@@ -192,16 +308,23 @@ export default async function ResultsPage({
     : defaultRound(races)
 
   const raceMeta = races.find(race => race.round === selectedRound)
-  const [result, pitStopMap] = await Promise.all([
+  const nextRace = races.find(race => race.round > selectedRound) ?? null
+  const circuitInfoEarly = getCircuitInfo(raceMeta?.circuit ?? '')
+
+  const [result, pitStopMap, qualifying, weather] = await Promise.all([
     fetchRaceResult(selectedSeason, selectedRound),
     fetchPitStops(selectedSeason, selectedRound),
+    fetchQualifyingResult(selectedSeason, selectedRound),
+    circuitInfoEarly?.lat != null && circuitInfoEarly?.lon != null && raceMeta?.raceDate
+      ? fetchRaceWeather(circuitInfoEarly.lat, circuitInfoEarly.lon, raceMeta.raceDate)
+      : Promise.resolve(null),
   ])
-  const circuitInfo = result?.circuitInfo
-    ?? (raceMeta ? getCircuitInfo(raceMeta.circuit) : null)
-    ?? null
 
+  const circuitInfo = result?.circuitInfo ?? circuitInfoEarly ?? null
   const allRows = result?.results ?? []
   const city = result?.city ?? ''
+  const fastestPit = pitStopMap ? getFastestPitStop(pitStopMap, allRows) : null
+  const pole = qualifying?.[0]?.name ?? null
 
   return (
     <main className="min-h-screen bg-[var(--bg-2)] px-4 py-10">
@@ -282,13 +405,23 @@ export default async function ResultsPage({
               </div>
             </div>
 
-            {/* TOP 5 + 탭 영역 */}
+            {/* 날씨 */}
+            {weather && <WeatherCard weather={weather} />}
+
+            {/* 레이스 결과 */}
             {result ? (
               <div className="flex flex-col gap-4">
-                <RaceStats rows={allRows} pitStopMap={pitStopMap} />
+                <WinnerCard row={allRows[0]} />
+                <RaceStats rows={allRows} pitStopMap={pitStopMap} fastestPit={fastestPit} pole={pole} />
                 <Top5 rows={allRows} />
                 <Suspense fallback={<TabsSkeleton />}>
-                  <SessionDataSection season={selectedSeason} round={selectedRound} allRows={allRows} pitStopMap={pitStopMap} />
+                  <SessionDataSection
+                    season={selectedSeason}
+                    round={selectedRound}
+                    allRows={allRows}
+                    pitStopMap={pitStopMap}
+                    qualifying={qualifying}
+                  />
                 </Suspense>
               </div>
             ) : (
@@ -301,6 +434,27 @@ export default async function ResultsPage({
             )}
           </div>
         </section>
+
+        {/* 다음 라운드 */}
+        {nextRace && (
+          <section className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
+            <p className="mb-2 text-xs font-black text-[var(--muted)]">다음 라운드</p>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-black text-[var(--text)]">
+                  R{String(nextRace.round).padStart(2, '0')} · {nextRace.name}
+                </p>
+                <p className="mt-0.5 text-xs font-bold text-[var(--muted)]">{formatRaceDate(nextRace.raceDate)}</p>
+              </div>
+              <Link
+                href={`/results?season=${selectedSeason}&round=${nextRace.round}`}
+                className="shrink-0 rounded-md border border-[var(--border)] bg-[var(--bg-2)] px-3 py-2 text-xs font-black text-[var(--text)] hover:border-[var(--accent)]"
+              >
+                해당 라운드로
+              </Link>
+            </div>
+          </section>
+        )}
       </div>
     </main>
   )
