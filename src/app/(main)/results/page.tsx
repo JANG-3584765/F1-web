@@ -2,6 +2,8 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { fetchSeasonRaces, type Race } from '@/lib/f1Api'
+import { MANUAL_RACE_DATA } from '@/lib/manualRaceData'
+import type { ManualPitStop, ManualDriverOfTheDay } from '@/lib/manualRaceData'
 import {
   fetchRaceResult,
   fetchPitStops,
@@ -10,6 +12,7 @@ import {
   fetchSprintResult,
   fetchPracticeResult,
   fetchRaceWeather,
+  fetchCircuitLapRecord,
   getCircuitInfo,
   type ResultRow,
   type PitStopMap,
@@ -40,23 +43,6 @@ function formatRaceDate(date: string) {
   return `${y}. ${m}. ${d}.`
 }
 
-function getFastestPitStop(
-  pitStopMap: PitStopMap,
-  rows: ResultRow[],
-): { name: string; lap: number; duration: string } | null {
-  let fastest: { driverId: string; lap: number; duration: string; sec: number } | null = null
-  for (const [driverId, data] of Object.entries(pitStopMap)) {
-    for (const stop of data.stops) {
-      const sec = parseFloat(stop.duration)
-      if (!isNaN(sec) && (fastest === null || sec < fastest.sec)) {
-        fastest = { driverId, lap: stop.lap, duration: stop.duration, sec }
-      }
-    }
-  }
-  if (!fastest) return null
-  const driver = rows.find(r => r.driverId === fastest!.driverId)
-  return driver ? { name: driver.name, lap: fastest.lap, duration: fastest.duration } : null
-}
 
 function WinnerCard({ row }: { row: ResultRow }) {
   return (
@@ -85,26 +71,45 @@ function WinnerCard({ row }: { row: ResultRow }) {
 }
 
 function WeatherCard({ weather }: { weather: RaceWeather }) {
+  const subtitle =
+    weather.source === 'openf1'
+      ? '레이스 당일 날씨 (OpenF1 공식 타이밍 데이터 · 세션 평균)'
+      : '레이스 당일 날씨 · Open-Meteo 기상 모델 · 레이스 시작 시간 기준'
+
   return (
     <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
-      <p className="mb-3 text-xs font-black text-[var(--muted)]">레이스 당일 날씨</p>
+      <p className="mb-3 text-xs font-black text-[var(--muted)]">{subtitle}</p>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         <div className="rounded-md bg-[var(--bg-2)] px-3 py-2">
           <p className="text-[10px] font-bold text-[var(--muted)]">기온</p>
-          <p className="text-sm font-black text-[var(--text)]">{weather.minTempC}°C ~ {weather.maxTempC}°C</p>
+          <p className="text-sm font-black text-[var(--text)]">{weather.tempC}°C</p>
         </div>
+        {weather.trackTempC != null && (
+          <div className="rounded-md bg-[var(--bg-2)] px-3 py-2">
+            <p className="text-[10px] font-bold text-[var(--muted)]">트랙 온도</p>
+            <p className="text-sm font-black text-[var(--text)]">{weather.trackTempC}°C</p>
+          </div>
+        )}
         <div className="rounded-md bg-[var(--bg-2)] px-3 py-2">
           <p className="text-[10px] font-bold text-[var(--muted)]">습도</p>
           <p className="text-sm font-black text-[var(--text)]">{weather.humidity}%</p>
         </div>
         <div className="rounded-md bg-[var(--bg-2)] px-3 py-2">
-          <p className="text-[10px] font-bold text-[var(--muted)]">최대 풍속</p>
-          <p className="text-sm font-black text-[var(--text)]">{weather.maxWindKph} km/h</p>
+          <p className="text-[10px] font-bold text-[var(--muted)]">풍속</p>
+          <p className="text-sm font-black text-[var(--text)]">{weather.windKph} km/h</p>
         </div>
-        <div className="rounded-md bg-[var(--bg-2)] px-3 py-2">
-          <p className="text-[10px] font-bold text-[var(--muted)]">강수량</p>
-          <p className="text-sm font-black text-[var(--text)]">{weather.precipMm} mm</p>
-        </div>
+        {weather.rainfall != null && (
+          <div className="rounded-md bg-[var(--bg-2)] px-3 py-2">
+            <p className="text-[10px] font-bold text-[var(--muted)]">강수</p>
+            <p className="text-sm font-black text-[var(--text)]">{weather.rainfall ? '비' : '없음'}</p>
+          </div>
+        )}
+        {weather.precipMm != null && (
+          <div className="rounded-md bg-[var(--bg-2)] px-3 py-2">
+            <p className="text-[10px] font-bold text-[var(--muted)]">강수량</p>
+            <p className="text-sm font-black text-[var(--text)]">{weather.precipMm} mm</p>
+          </div>
+        )}
         {weather.precipProb != null && (
           <div className="rounded-md bg-[var(--bg-2)] px-3 py-2">
             <p className="text-[10px] font-bold text-[var(--muted)]">강수 확률</p>
@@ -120,11 +125,13 @@ function RaceStats({
   rows,
   pitStopMap,
   fastestPit,
+  driverOfTheDay,
   pole,
 }: {
   rows: ResultRow[]
   pitStopMap: PitStopMap | null
-  fastestPit?: { name: string; lap: number; duration: string } | null
+  fastestPit?: ManualPitStop | null
+  driverOfTheDay?: ManualDriverOfTheDay | null
   pole?: string | null
 }) {
   if (!rows.length) return null
@@ -151,7 +158,14 @@ function RaceStats({
       )}
       {fastestPit && (
         <span className="rounded border border-[var(--border)] bg-[var(--bg-2)] px-2.5 py-1 text-xs font-black text-[var(--text)]">
-          패스티스트 피트: {fastestPit.name} · {fastestPit.duration}s ({fastestPit.lap}랩)
+          <span className="inline-block h-2 w-2 rounded-full mr-1" style={{ backgroundColor: fastestPit.teamColor }} />
+          패스티스트 피트: {fastestPit.team} · {fastestPit.driver} · {fastestPit.duration.toFixed(3)}s ({fastestPit.lap}랩)
+        </span>
+      )}
+      {driverOfTheDay && (
+        <span className="rounded border border-[var(--border)] bg-[var(--bg-2)] px-2.5 py-1 text-xs font-black text-[var(--text)]">
+          <span className="inline-block h-2 w-2 rounded-full mr-1" style={{ backgroundColor: driverOfTheDay.teamColor }} />
+          오늘의 드라이버: {driverOfTheDay.driver} · {driverOfTheDay.team}
         </span>
       )}
       {pole && (
@@ -311,19 +325,24 @@ export default async function ResultsPage({
   const nextRace = races.find(race => race.round > selectedRound) ?? null
   const circuitInfoEarly = getCircuitInfo(raceMeta?.circuit ?? '')
 
-  const [result, pitStopMap, qualifying, weather] = await Promise.all([
+  const [result, pitStopMap, qualifying, weather, lapRecord] = await Promise.all([
     fetchRaceResult(selectedSeason, selectedRound),
     fetchPitStops(selectedSeason, selectedRound),
     fetchQualifyingResult(selectedSeason, selectedRound),
     circuitInfoEarly?.lat != null && circuitInfoEarly?.lon != null && raceMeta?.raceDate
-      ? fetchRaceWeather(circuitInfoEarly.lat, circuitInfoEarly.lon, raceMeta.raceDate)
+      ? fetchRaceWeather(circuitInfoEarly.lat, circuitInfoEarly.lon, raceMeta.raceDate, raceMeta.raceTime, selectedSeason)
+      : Promise.resolve(null),
+    circuitInfoEarly?.circuitId
+      ? fetchCircuitLapRecord(circuitInfoEarly.circuitId)
       : Promise.resolve(null),
   ])
 
   const circuitInfo = result?.circuitInfo ?? circuitInfoEarly ?? null
   const allRows = result?.results ?? []
   const city = result?.city ?? ''
-  const fastestPit = pitStopMap ? getFastestPitStop(pitStopMap, allRows) : null
+  const manualData = MANUAL_RACE_DATA[`${selectedSeason}-${selectedRound}`] ?? null
+  const fastestPit = manualData?.fastestPitStop ?? null
+  const driverOfTheDay = manualData?.driverOfTheDay ?? null
   const pole = qualifying?.[0]?.name ?? null
 
   return (
@@ -376,30 +395,69 @@ export default async function ResultsPage({
                 </div>
               ) : null}
 
-              <div className="rounded-lg border border-[var(--border)] p-4">
-                <p className="text-base font-black text-[var(--text)]">
-                  {result?.circuitName ?? raceMeta?.circuit ?? '서킷 정보 없음'}
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2 text-xs font-black text-[var(--muted)]">
+              <div className="rounded-lg border border-[var(--border)] p-4 flex flex-col gap-3">
+                <div>
+                  <p className="text-base font-black text-[var(--text)]">
+                    {result?.circuitName ?? raceMeta?.circuit ?? '서킷 정보 없음'}
+                  </p>
                   {city && (
-                    <span className="rounded bg-[var(--bg-2)] px-2 py-1">{city}</span>
+                    <p className="mt-0.5 text-xs font-bold text-[var(--muted)]">{city}</p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                  {circuitInfo?.lengthKm != null && (
+                    <div>
+                      <p className="text-[10px] font-bold text-[var(--muted)]">서킷 길이</p>
+                      <p className="text-sm font-black text-[var(--text)]">{circuitInfo.lengthKm} km</p>
+                    </div>
+                  )}
+                  {circuitInfo?.firstGrandPrix != null && (
+                    <div>
+                      <p className="text-[10px] font-bold text-[var(--muted)]">첫 그랑프리</p>
+                      <p className="text-sm font-black text-[var(--text)]">{circuitInfo.firstGrandPrix}년</p>
+                    </div>
                   )}
                   {circuitInfo?.laps != null && (
-                    <span className="rounded bg-[var(--bg-2)] px-2 py-1">랩 {circuitInfo.laps}</span>
+                    <div>
+                      <p className="text-[10px] font-bold text-[var(--muted)]">랩 수</p>
+                      <p className="text-sm font-black text-[var(--text)]">{circuitInfo.laps} 랩</p>
+                    </div>
                   )}
-                  {circuitInfo?.lengthKm != null && (
-                    <span className="rounded bg-[var(--bg-2)] px-2 py-1">{circuitInfo.lengthKm}km</span>
+                  {(circuitInfo?.raceDistanceKm != null || (circuitInfo?.laps != null && circuitInfo?.lengthKm != null)) && (
+                    <div>
+                      <p className="text-[10px] font-bold text-[var(--muted)]">레이스 거리</p>
+                      <p className="text-sm font-black text-[var(--text)]">
+                        {circuitInfo.raceDistanceKm != null
+                          ? circuitInfo.raceDistanceKm
+                          : (circuitInfo.laps! * circuitInfo.lengthKm).toFixed(3)} km
+                      </p>
+                    </div>
+                  )}
+                  {lapRecord && (
+                    <div className="col-span-2">
+                      <p className="text-[10px] font-bold text-[var(--muted)]">랩 레코드</p>
+                      <p className="text-sm font-black text-[var(--text)]">
+                        {lapRecord.time}
+                        <span className="ml-1.5 font-bold text-[var(--muted)]">
+                          {lapRecord.driver} · {lapRecord.year}년
+                        </span>
+                      </p>
+                    </div>
                   )}
                   {result?.fastestLapDriver && (
-                    <span className="rounded bg-purple-100 px-2 py-1 text-purple-700">
-                      패스티스트랩: {result.fastestLapDriver}
-                      {result.fastestLapTime ? ` · ${result.fastestLapTime}` : ''}
-                    </span>
-                  )}
-                  {circuitInfo?.lapRecord && (
-                    <span className="rounded bg-[var(--bg-2)] px-2 py-1">
-                      랩 레코드: {circuitInfo.lapRecord.time} · {circuitInfo.lapRecord.driver} ({circuitInfo.lapRecord.year})
-                    </span>
+                    <div className="col-span-2">
+                      <p className="text-[10px] font-bold text-[var(--muted)]">이번 라운드 패스티스트 랩</p>
+                      <p className="text-sm font-black text-purple-600">
+                        {result.fastestLapDriver}
+                        {result.fastestLapTime && (
+                          <span className="font-bold text-purple-400"> · {result.fastestLapTime}</span>
+                        )}
+                        {result.fastestLapLap != null && (
+                          <span className="font-bold text-purple-400"> ({result.fastestLapLap} Lap)</span>
+                        )}
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -412,7 +470,7 @@ export default async function ResultsPage({
             {result ? (
               <div className="flex flex-col gap-4">
                 <WinnerCard row={allRows[0]} />
-                <RaceStats rows={allRows} pitStopMap={pitStopMap} fastestPit={fastestPit} pole={pole} />
+                <RaceStats rows={allRows} pitStopMap={pitStopMap} fastestPit={fastestPit} driverOfTheDay={driverOfTheDay} pole={pole} />
                 <Top5 rows={allRows} />
                 <Suspense fallback={<TabsSkeleton />}>
                   <SessionDataSection
