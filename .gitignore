@@ -49,3 +49,6 @@ next-env.d.ts
 
 # lockfile (solo project)
 package-lock.json
+
+# 학습용
+STUDY.md
