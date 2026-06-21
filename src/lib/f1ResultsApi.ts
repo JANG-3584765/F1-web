@@ -3,42 +3,46 @@ import { GP_NAMES, CIRCUIT_NAMES, COUNTRY_CODES } from './f1Api'
 export interface CircuitInfo {
   laps: number | null
   lengthKm: number
+  raceDistanceKm?: number
   image: string
   lat?: number
   lon?: number
-  lapRecord?: {
-    time: string
-    driver: string
-    year: number
-  }
+  firstGrandPrix?: number
+  circuitId?: string
+}
+
+export interface CircuitLapRecord {
+  time: string
+  driver: string
+  year: number
 }
 
 export const CIRCUIT_INFO: Record<string, CircuitInfo> = {
-  'Albert Park Grand Prix Circuit':  { laps: 58, lengthKm: 5.278, lat: -37.8497, lon: 144.9680, image: '앨버트 파크 서킷.png', lapRecord: { time: '1:19.813', driver: '샤를 르클레르', year: 2024 } },
-  'Shanghai International Circuit':  { laps: 56, lengthKm: 5.451, lat: 31.3389,  lon: 121.2198, image: '상하이 인터내셔널 서킷.png', lapRecord: { time: '1:32.238', driver: '미하엘 슈마허', year: 2004 } },
-  'Suzuka Circuit':                  { laps: 53, lengthKm: 5.807, lat: 34.8431,  lon: 136.5408, image: '스즈카 서킷.png', lapRecord: { time: '1:30.965', driver: '키미 안토넬리', year: 2025 } },
-  'Bahrain International Circuit':   { laps: 57, lengthKm: 5.412, lat: 26.0325,  lon: 50.5106,  image: '바레인 인터내셔널 서킷.png', lapRecord: { time: '1:31.447', driver: '페드로 데 라 로사', year: 2005 } },
-  'Jeddah Corniche Circuit':         { laps: 50, lengthKm: 6.174, lat: 21.6319,  lon: 39.1044,  image: '제다 코니쉬 서킷.png', lapRecord: { time: '1:30.734', driver: '루이스 해밀턴', year: 2021 } },
-  'Miami International Autodrome':   { laps: 57, lengthKm: 5.412, lat: 25.9580,  lon: -80.2389, image: '마이애미 인터내셔널 오토드롬.png', lapRecord: { time: '1:29.708', driver: '막스 베르스타펜', year: 2023 } },
-  'Autodromo Enzo e Dino Ferrari':   { laps: 63, lengthKm: 4.909, lat: 44.3439,  lon: 11.7167,  image: '이몰라 서킷.jpg', lapRecord: { time: '1:15.484', driver: '루이스 해밀턴', year: 2020 } },
-  'Circuit de Monaco':               { laps: 78, lengthKm: 3.337, lat: 43.7347,  lon: 7.4205,   image: '시르퀴 드 모나코.png', lapRecord: { time: '1:12.909', driver: '루이스 해밀턴', year: 2021 } },
-  'Circuit de Barcelona-Catalunya':  { laps: 66, lengthKm: 4.657, lat: 41.5700,  lon: 2.2611,   image: '시르쿠이트 데 바르셀로나.png', lapRecord: { time: '1:16.330', driver: '막스 베르스타펜', year: 2023 } },
-  'Circuit Gilles Villeneuve':       { laps: 70, lengthKm: 4.361, lat: 45.5000,  lon: -73.5228, image: '시르퀴 질 빌뇌브.png', lapRecord: { time: '1:13.078', driver: '발테리 보타스', year: 2019 } },
-  'Red Bull Ring':                   { laps: 71, lengthKm: 4.326, lat: 47.2197,  lon: 14.7647,  image: '레드불링.png', lapRecord: { time: '1:05.619', driver: '카를로스 사인츠', year: 2020 } },
-  'Silverstone Circuit':             { laps: 52, lengthKm: 5.891, lat: 52.0786,  lon: -1.0169,  image: '실버스톤 서킷.png', lapRecord: { time: '1:27.097', driver: '막스 베르스타펜', year: 2020 } },
-  'Circuit de Spa-Francorchamps':    { laps: 44, lengthKm: 7.004, lat: 50.4372,  lon: 5.9714,   image: '스파 프랑코샹 서킷.png', lapRecord: { time: '1:46.286', driver: '발테리 보타스', year: 2018 } },
-  'Hungaroring':                     { laps: 70, lengthKm: 4.381, lat: 47.5789,  lon: 19.2486,  image: '헝가로링.png', lapRecord: { time: '1:16.627', driver: '루이스 해밀턴', year: 2020 } },
-  'Circuit Park Zandvoort':          { laps: 72, lengthKm: 4.259, lat: 52.3888,  lon: 4.5409,   image: '잔드보르트 서킷.png', lapRecord: { time: '1:11.097', driver: '루이스 해밀턴', year: 2021 } },
-  'Autodromo Nazionale di Monza':    { laps: 53, lengthKm: 5.793, lat: 45.6156,  lon: 9.2811,   image: '몬자서킷.png', lapRecord: { time: '1:21.046', driver: '루벤스 바리첼로', year: 2004 } },
-  'Baku City Circuit':               { laps: 51, lengthKm: 6.003, lat: 40.3725,  lon: 49.8533,  image: '바쿠 시티 서킷.png', lapRecord: { time: '1:43.009', driver: '샤를 르클레르', year: 2019 } },
-  'Marina Bay Street Circuit':       { laps: 62, lengthKm: 4.927, lat: 1.2914,   lon: 103.8640, image: '마리나베이 서킷.png', lapRecord: { time: '1:34.486', driver: '다니엘 리카르도', year: 2024 } },
-  'Circuit of the Americas':         { laps: 56, lengthKm: 5.513, lat: 30.1328,  lon: -97.6411, image: '서킷 오브 디 아메리카스.png', lapRecord: { time: '1:36.169', driver: '샤를 르클레르', year: 2019 } },
-  'Autódromo Hermanos Rodríguez':    { laps: 71, lengthKm: 4.304, lat: 19.4042,  lon: -99.0907, image: '아우토드로모 에르마노스 로드리게스.png', lapRecord: { time: '1:17.774', driver: '발테리 보타스', year: 2021 } },
-  'Autódromo José Carlos Pace':      { laps: 71, lengthKm: 4.309, lat: -23.7036, lon: -46.6997, image: '인터라고스 서킷.png', lapRecord: { time: '1:10.540', driver: '발테리 보타스', year: 2018 } },
-  'Las Vegas Strip Street Circuit':  { laps: 50, lengthKm: 6.201, lat: 36.1147,  lon: -115.1730, image: '라스베가스 스트립 서킷.png', lapRecord: { time: '1:34.876', driver: '랜도 노리스', year: 2024 } },
-  'Losail International Circuit':    { laps: 57, lengthKm: 5.419, lat: 25.4900,  lon: 51.4542,  image: '루사일 인터내셔널 서킷.png', lapRecord: { time: '1:22.384', driver: '랜도 노리스', year: 2024 } },
-  'Yas Marina Circuit':              { laps: 58, lengthKm: 5.281, lat: 24.4672,  lon: 54.6031,  image: '야스 마리나 서킷.png', lapRecord: { time: '1:26.103', driver: '막스 베르스타펜', year: 2021 } },
-  'Madring':                         { laps: null, lengthKm: 5.474, lat: 40.4153, lon: -3.5786,  image: '마드링.png' },
+  'Albert Park Grand Prix Circuit':  { laps: 58, lengthKm: 5.278, lat: -37.8497, lon: 144.9680, firstGrandPrix: 1996, circuitId: 'albert_park',   image: '앨버트 파크 서킷.png' },
+  'Shanghai International Circuit':  { laps: 56, lengthKm: 5.451, lat: 31.3389,  lon: 121.2198, firstGrandPrix: 2004, circuitId: 'shanghai',       image: '상하이 인터내셔널 서킷.png' },
+  'Suzuka Circuit':                  { laps: 53, lengthKm: 5.807, lat: 34.8431,  lon: 136.5408, firstGrandPrix: 1987, circuitId: 'suzuka',         image: '스즈카 서킷.png' },
+  'Bahrain International Circuit':   { laps: 57, lengthKm: 5.412, lat: 26.0325,  lon: 50.5106,  firstGrandPrix: 2004, circuitId: 'bahrain',        image: '바레인 인터내셔널 서킷.png' },
+  'Jeddah Corniche Circuit':         { laps: 50, lengthKm: 6.174, lat: 21.6319,  lon: 39.1044,  firstGrandPrix: 2021, circuitId: 'jeddah',         image: '제다 코니쉬 서킷.png' },
+  'Miami International Autodrome':   { laps: 57, lengthKm: 5.412, lat: 25.9580,  lon: -80.2389, firstGrandPrix: 2022, circuitId: 'miami',          image: '마이애미 인터내셔널 오토드롬.png' },
+  'Autodromo Enzo e Dino Ferrari':   { laps: 63, lengthKm: 4.909, lat: 44.3439,  lon: 11.7167,  firstGrandPrix: 1980, circuitId: 'imola',          image: '이몰라 서킷.jpg' },
+  'Circuit de Monaco':               { laps: 78, lengthKm: 3.337, lat: 43.7347,  lon: 7.4205,   firstGrandPrix: 1929, circuitId: 'monaco',         image: '시르퀴 드 모나코.png' },
+  'Circuit de Barcelona-Catalunya':  { laps: 66, lengthKm: 4.657, raceDistanceKm: 307.236, lat: 41.5700, lon: 2.2611, firstGrandPrix: 1991, circuitId: 'catalunya',     image: '시르쿠이트 데 바르셀로나.png' },
+  'Circuit Gilles Villeneuve':       { laps: 70, lengthKm: 4.361, lat: 45.5000,  lon: -73.5228, firstGrandPrix: 1978, circuitId: 'villeneuve',     image: '시르퀴 질 빌뇌브.png' },
+  'Red Bull Ring':                   { laps: 71, lengthKm: 4.326, lat: 47.2197,  lon: 14.7647,  firstGrandPrix: 1970, circuitId: 'red_bull_ring',  image: '레드불링.png' },
+  'Silverstone Circuit':             { laps: 52, lengthKm: 5.891, lat: 52.0786,  lon: -1.0169,  firstGrandPrix: 1950, circuitId: 'silverstone',    image: '실버스톤 서킷.png' },
+  'Circuit de Spa-Francorchamps':    { laps: 44, lengthKm: 7.004, lat: 50.4372,  lon: 5.9714,   firstGrandPrix: 1950, circuitId: 'spa',            image: '스파 프랑코샹 서킷.png' },
+  'Hungaroring':                     { laps: 70, lengthKm: 4.381, lat: 47.5789,  lon: 19.2486,  firstGrandPrix: 1986, circuitId: 'hungaroring',    image: '헝가로링.png' },
+  'Circuit Park Zandvoort':          { laps: 72, lengthKm: 4.259, lat: 52.3888,  lon: 4.5409,   firstGrandPrix: 1952, circuitId: 'zandvoort',      image: '잔드보르트 서킷.png' },
+  'Autodromo Nazionale di Monza':    { laps: 53, lengthKm: 5.793, lat: 45.6156,  lon: 9.2811,   firstGrandPrix: 1950, circuitId: 'monza',          image: '몬자서킷.png' },
+  'Baku City Circuit':               { laps: 51, lengthKm: 6.003, lat: 40.3725,  lon: 49.8533,  firstGrandPrix: 2016, circuitId: 'baku',           image: '바쿠 시티 서킷.png' },
+  'Marina Bay Street Circuit':       { laps: 62, lengthKm: 4.927, lat: 1.2914,   lon: 103.8640, firstGrandPrix: 2008, circuitId: 'marina_bay',     image: '마리나베이 서킷.png' },
+  'Circuit of the Americas':         { laps: 56, lengthKm: 5.513, lat: 30.1328,  lon: -97.6411, firstGrandPrix: 2012, circuitId: 'americas',       image: '서킷 오브 디 아메리카스.png' },
+  'Autódromo Hermanos Rodríguez':    { laps: 71, lengthKm: 4.304, lat: 19.4042,  lon: -99.0907, firstGrandPrix: 1963, circuitId: 'rodriguez',      image: '아우토드로모 에르마노스 로드리게스.png' },
+  'Autódromo José Carlos Pace':      { laps: 71, lengthKm: 4.309, lat: -23.7036, lon: -46.6997, firstGrandPrix: 1973, circuitId: 'interlagos',     image: '인터라고스 서킷.png' },
+  'Las Vegas Strip Street Circuit':  { laps: 50, lengthKm: 6.201, lat: 36.1147,  lon: -115.1730, firstGrandPrix: 2023, circuitId: 'vegas',         image: '라스베가스 스트립 서킷.png' },
+  'Losail International Circuit':    { laps: 57, lengthKm: 5.419, lat: 25.4900,  lon: 51.4542,  firstGrandPrix: 2021, circuitId: 'losail',         image: '루사일 인터내셔널 서킷.png' },
+  'Yas Marina Circuit':              { laps: 58, lengthKm: 5.281, lat: 24.4672,  lon: 54.6031,  firstGrandPrix: 2009, circuitId: 'yas_marina',     image: '야스 마리나 서킷.png' },
+  'Madring':                         { laps: null, lengthKm: 5.474, lat: 40.4153, lon: -3.5786,  firstGrandPrix: 2026,                              image: '마드링.png' },
 }
 
 export function getCircuitInfo(circuitName: string): CircuitInfo | null {
@@ -222,6 +226,7 @@ export interface RaceResult {
   city: string
   fastestLapDriver: string | null
   fastestLapTime: string | null
+  fastestLapLap: number | null
   results: ResultRow[]
 }
 
@@ -246,7 +251,7 @@ interface JolpicaResultItem {
   Driver: JolpicaDriver
   Constructor: JolpicaConstructor
   Time?: { time: string }
-  FastestLap?: { rank: string; Time?: { time: string } }
+  FastestLap?: { rank: string; lap?: string; Time?: { time: string } }
 }
 
 interface JolpicaQualifyingItem {
@@ -300,6 +305,7 @@ export async function fetchRaceResult(year: number, round: number): Promise<Race
     const circuitApiName: string = race.Circuit.circuitName
     let fastestLapDriver: string | null = null
     let fastestLapTime: string | null = null
+    let fastestLapLap: number | null = null
 
     const results: ResultRow[] = race.Results.map((r: JolpicaResultItem): ResultRow => {
       const driverName = getDriverName(r.Driver)
@@ -312,6 +318,7 @@ export async function fetchRaceResult(year: number, round: number): Promise<Race
       if (isFastest) {
         fastestLapDriver = driverName
         fastestLapTime = r.FastestLap?.Time?.time ?? null
+        fastestLapLap = r.FastestLap?.lap ? Number(r.FastestLap.lap) : null
       }
 
       return {
@@ -339,6 +346,7 @@ export async function fetchRaceResult(year: number, round: number): Promise<Race
       city: getCityName(race.Circuit.Location.locality ?? ''),
       fastestLapDriver,
       fastestLapTime,
+      fastestLapLap,
       results,
     }
   } catch {
@@ -587,53 +595,177 @@ export async function fetchLastRacePodium(): Promise<LastRaceMini | null> {
   }
 }
 
-export interface RaceWeather {
-  maxTempC: number
-  minTempC: number
-  humidity: number
-  maxWindKph: number
-  precipMm: number
-  precipProb: number | null
+function lapTimeToSeconds(time: string): number {
+  const [min, sec] = time.split(':')
+  return parseInt(min) * 60 + parseFloat(sec)
 }
 
-export async function fetchRaceWeather(lat: number, lon: number, date: string): Promise<RaceWeather | null> {
+export async function fetchCircuitLapRecord(circuitId: string): Promise<CircuitLapRecord | null> {
+  try {
+    const res = await fetch(
+      `https://api.jolpi.ca/ergast/f1/circuits/${circuitId}/fastest/1/results.json?limit=200`,
+      { next: { revalidate: 86400 } },
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    const races: {
+      season: string
+      Results: { Driver: JolpicaDriver; FastestLap?: { Time?: { time: string } } }[]
+    }[] = data.MRData?.RaceTable?.Races ?? []
+    if (!races.length) return null
+
+    let best: CircuitLapRecord | null = null
+    let bestSec = Infinity
+
+    for (const race of races) {
+      const result = race.Results?.[0]
+      const timeStr = result?.FastestLap?.Time?.time
+      if (!timeStr) continue
+      const sec = lapTimeToSeconds(timeStr)
+      if (sec < bestSec) {
+        bestSec = sec
+        best = {
+          time: timeStr,
+          driver: getDriverName(result.Driver),
+          year: parseInt(race.season),
+        }
+      }
+    }
+
+    return best
+  } catch {
+    return null
+  }
+}
+
+export interface RaceWeather {
+  tempC: number
+  trackTempC: number | null
+  humidity: number
+  windKph: number
+  rainfall: boolean | null
+  precipMm: number | null
+  precipProb: number | null
+  source: 'openf1' | 'open-meteo'
+}
+
+interface OpenF1WeatherPoint {
+  air_temperature: number
+  track_temperature: number
+  humidity: number
+  wind_speed: number  // m/s
+  rainfall: number    // 0 | 1
+}
+
+async function fetchOpenF1RaceWeather(year: number, raceDate: string): Promise<RaceWeather | null> {
+  // Get all Race sessions for the year, find the one matching raceDate
+  const sessionsRes = await fetch(
+    `https://api.openf1.org/v1/sessions?year=${year}&session_name=Race`,
+    { next: { revalidate: 3600 } },
+  )
+  if (!sessionsRes.ok) return null
+  const sessions: { session_key: number; date_start: string }[] = await sessionsRes.json()
+
+  const session = sessions.find(s => s.date_start?.startsWith(raceDate))
+  if (!session) return null
+
+  const weatherRes = await fetch(
+    `https://api.openf1.org/v1/weather?session_key=${session.session_key}`,
+    { next: { revalidate: 3600 } },
+  )
+  if (!weatherRes.ok) return null
+  const points: OpenF1WeatherPoint[] = await weatherRes.json()
+  if (!points.length) return null
+
+  const avg = (vals: number[]) => vals.reduce((a, b) => a + b, 0) / vals.length
+
+  return {
+    tempC: Math.round(avg(points.map(p => p.air_temperature))),
+    trackTempC: Math.round(avg(points.map(p => p.track_temperature))),
+    humidity: Math.round(avg(points.map(p => p.humidity))),
+    windKph: Math.round(avg(points.map(p => p.wind_speed)) * 10) / 10,
+    rainfall: points.some(p => p.rainfall === 1),
+    precipMm: null,
+    precipProb: null,
+    source: 'openf1',
+  }
+}
+
+async function fetchOpenMeteoWeather(
+  lat: number,
+  lon: number,
+  date: string,
+  raceTimeUtc?: string,
+): Promise<RaceWeather | null> {
+  const today = new Date().toISOString().slice(0, 10)
+  const isPast = date < today
+  const baseUrl = isPast
+    ? 'https://archive-api.open-meteo.com/v1/archive'
+    : 'https://api.open-meteo.com/v1/forecast'
+
+  const hourlyVars = ['temperature_2m', 'relative_humidity_2m', 'wind_speed_10m']
+  const dailyVars = ['precipitation_sum']
+  if (!isPast) dailyVars.push('precipitation_probability_max')
+
+  const params = new URLSearchParams({
+    latitude: String(lat),
+    longitude: String(lon),
+    start_date: date,
+    end_date: date,
+    hourly: hourlyVars.join(','),
+    daily: dailyVars.join(','),
+    timezone: 'auto',
+    wind_speed_unit: 'kmh',
+  })
+
+  const res = await fetch(`${baseUrl}?${params}`, { next: { revalidate: 3600 } })
+  if (!res.ok) return null
+
+  const data = await res.json()
+  const h = data.hourly
+  const d = data.daily
+  if (!h) return null
+
+  let raceHour = 14
+  if (raceTimeUtc && Array.isArray(h.time)) {
+    const utcMs = new Date(`${date}T${raceTimeUtc}`).getTime()
+    let minDiff = Infinity
+    for (let i = 0; i < (h.time as string[]).length; i++) {
+      const diff = Math.abs(new Date(h.time[i]).getTime() - utcMs)
+      if (diff < minDiff) { minDiff = diff; raceHour = i }
+    }
+  }
+
+  return {
+    tempC: Math.round(h.temperature_2m?.[raceHour] ?? 0),
+    trackTempC: null,
+    humidity: Math.round(h.relative_humidity_2m?.[raceHour] ?? 0),
+    windKph: Math.round(h.wind_speed_10m?.[raceHour] ?? 0),
+    rainfall: null,
+    precipMm: Number((d?.precipitation_sum?.[0] ?? 0).toFixed(1)),
+    precipProb: d?.precipitation_probability_max?.[0] ?? null,
+    source: 'open-meteo',
+  }
+}
+
+export async function fetchRaceWeather(
+  lat: number,
+  lon: number,
+  date: string,
+  raceTimeUtc?: string,
+  year?: number,
+): Promise<RaceWeather | null> {
   try {
     const today = new Date().toISOString().slice(0, 10)
     const isPast = date < today
-    const baseUrl = isPast
-      ? 'https://archive-api.open-meteo.com/v1/archive'
-      : 'https://api.open-meteo.com/v1/forecast'
 
-    const dailyVars = ['temperature_2m_max', 'temperature_2m_min', 'precipitation_sum', 'wind_speed_10m_max']
-    if (!isPast) dailyVars.push('precipitation_probability_max')
-
-    const params = new URLSearchParams({
-      latitude: String(lat),
-      longitude: String(lon),
-      start_date: date,
-      end_date: date,
-      daily: dailyVars.join(','),
-      hourly: 'relative_humidity_2m',
-      timezone: 'auto',
-      wind_speed_unit: 'kmh',
-    })
-
-    const res = await fetch(`${baseUrl}?${params}`, { next: { revalidate: 3600 } })
-    if (!res.ok) return null
-
-    const data = await res.json()
-    const d = data.daily
-    const h = data.hourly
-    if (!d) return null
-
-    return {
-      maxTempC: Math.round(d.temperature_2m_max?.[0] ?? 0),
-      minTempC: Math.round(d.temperature_2m_min?.[0] ?? 0),
-      humidity: Math.round(h?.relative_humidity_2m?.[12] ?? 0),
-      maxWindKph: Math.round(d.wind_speed_10m_max?.[0] ?? 0),
-      precipMm: Number((d.precipitation_sum?.[0] ?? 0).toFixed(1)),
-      precipProb: d.precipitation_probability_max?.[0] ?? null,
+    // OpenF1 has circuit sensor data from 2023 onwards, only for past races
+    if (isPast && year && year >= 2023) {
+      const result = await fetchOpenF1RaceWeather(year, date)
+      if (result) return result
     }
+
+    return await fetchOpenMeteoWeather(lat, lon, date, raceTimeUtc)
   } catch {
     return null
   }
