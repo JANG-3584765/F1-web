@@ -212,14 +212,15 @@ export async function fetchF1News(): Promise<NewsItem[]> {
       .from('news_translations')
       .upsert(
         newArticles.map(n => ({
-          article_url: n.link,
-          title_en:    n.titleEn,
-          summary_en:  n.summaryEn,
-          title_kr:    null,
-          summary_kr:  null,
-          image_url:   n.image ?? null,
-          source:      n.source,
-          pub_date:    n.pubDate,
+          article_url:  n.link,
+          title_en:     n.titleEn,
+          summary_en:   n.summaryEn,
+          title_kr:     null,
+          summary_kr:   null,
+          image_url:    n.image ?? null,
+          source:       n.source,
+          pub_date:     n.pubDate,
+          is_published: true,
         })),
         { onConflict: 'article_url', ignoreDuplicates: true },
       )
