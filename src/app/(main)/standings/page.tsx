@@ -1,6 +1,8 @@
 import { fetchEnrichedStandings } from '@/lib/f1StandingsApi'
 import StandingsClient from './StandingsClient'
 
+export const revalidate = 3600
+
 const CURRENT_YEAR = new Date().getFullYear()
 const SEASONS = Array.from({ length: CURRENT_YEAR - 1950 + 1 }, (_, i) => CURRENT_YEAR - i)
 

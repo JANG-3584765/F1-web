@@ -278,7 +278,7 @@ export async function fetchF1News(): Promise<NewsItem[]> {
       pubDate:     n.pubDate,
       source:      n.source,
       image:       row?.image_url  ?? n.image,
-      isPublished: row?.is_published ?? false,
+      isPublished: row?.is_published ?? true,
     }
   })
 }
