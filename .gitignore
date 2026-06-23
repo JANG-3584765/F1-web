@@ -52,3 +52,6 @@ package-lock.json
 
 # 학습용 (로컬 전용)
 /study/
+
+# 스캔 출력물 (로컬 전용)
+scripts/missing-drivers.txt

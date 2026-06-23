@@ -1,9 +1,9 @@
 import { GP_NAMES, CIRCUIT_NAMES, COUNTRY_CODES } from './f1Api'
+import { getDriverKrName } from './f1StandingsApi'
 
 export interface CircuitInfo {
   laps: number | null
   lengthKm: number
-  raceDistanceKm?: number
   image: string
   lat?: number
   lon?: number
@@ -26,7 +26,7 @@ export const CIRCUIT_INFO: Record<string, CircuitInfo> = {
   'Miami International Autodrome':   { laps: 57, lengthKm: 5.412, lat: 25.9580,  lon: -80.2389, firstGrandPrix: 2022, circuitId: 'miami',          image: '마이애미 인터내셔널 오토드롬.png' },
   'Autodromo Enzo e Dino Ferrari':   { laps: 63, lengthKm: 4.909, lat: 44.3439,  lon: 11.7167,  firstGrandPrix: 1980, circuitId: 'imola',          image: '이몰라 서킷.jpg' },
   'Circuit de Monaco':               { laps: 78, lengthKm: 3.337, lat: 43.7347,  lon: 7.4205,   firstGrandPrix: 1929, circuitId: 'monaco',         image: '시르퀴 드 모나코.png' },
-  'Circuit de Barcelona-Catalunya':  { laps: 66, lengthKm: 4.657, raceDistanceKm: 307.236, lat: 41.5700, lon: 2.2611, firstGrandPrix: 1991, circuitId: 'catalunya',     image: '시르쿠이트 데 바르셀로나.png' },
+  'Circuit de Barcelona-Catalunya':  { laps: 66, lengthKm: 4.657, lat: 41.5700, lon: 2.2611, firstGrandPrix: 1991, circuitId: 'catalunya',     image: '시르쿠이트 데 바르셀로나.png' },
   'Circuit Gilles Villeneuve':       { laps: 70, lengthKm: 4.361, lat: 45.5000,  lon: -73.5228, firstGrandPrix: 1978, circuitId: 'villeneuve',     image: '시르퀴 질 빌뇌브.png' },
   'Red Bull Ring':                   { laps: 71, lengthKm: 4.326, lat: 47.2197,  lon: 14.7647,  firstGrandPrix: 1970, circuitId: 'red_bull_ring',  image: '레드불링.png' },
   'Silverstone Circuit':             { laps: 52, lengthKm: 5.891, lat: 52.0786,  lon: -1.0169,  firstGrandPrix: 1950, circuitId: 'silverstone',    image: '실버스톤 서킷.png' },
@@ -86,41 +86,6 @@ export function getCityName(city: string): string {
   return CITY_NAMES[city] ?? city
 }
 
-// 악센트(Pérez→Perez 등)는 getDriverName()에서 정규화 처리하므로 제거
-// API가 givenName+familyName 순서로 반환하므로 역순 중복 제거
-// Alexander/Alex Albon은 API가 실제로 두 형태 모두 사용해 유지
-const DRIVER_FULL_NAMES: Record<string, string> = {
-  // ── 2025 그리드 ──
-  'Max Verstappen':    '막스 베르스타펜',
-  'Liam Lawson':       '리암 로슨',
-  'Lando Norris':      '랜도 노리스',
-  'Oscar Piastri':     '오스카 피아스트리',
-  'Charles Leclerc':   '샤를 르클레르',
-  'Lewis Hamilton':    '루이스 해밀턴',
-  'George Russell':    '조지 러셀',
-  'Kimi Antonelli':         '키미 안토넬리',
-  'Andrea Kimi Antonelli':  '키미 안토넬리',
-  'Fernando Alonso':   '페르난도 알론소',
-  'Lance Stroll':      '랜스 스트롤',
-  'Pierre Gasly':      '피에르 가슬리',
-  'Jack Doohan':       '잭 두한',
-  'Alexander Albon':   '알렉스 알본',
-  'Alex Albon':        '알렉스 알본',
-  'Carlos Sainz':      '카를로스 사인츠',
-  'Yuki Tsunoda':      '유키 츠노다',
-  'Isack Hadjar':      '아이작 하자르',
-  'Esteban Ocon':      '에스테반 오콘',
-  'Oliver Bearman':    '올리버 베어먼',
-  'Nico Hulkenberg':   '니코 휠켄베르트',
-  'Gabriel Bortoleto': '가브리에우 보르톨레투',
-  'Franco Colapinto':  '프랑코 콜라핀토',
-  'Arvid Lindblad':    '아비드 린드블라드',
-  // ── 최근 전임자 (FP 대체 출전 가능) ──
-  'Sergio Perez':      '세르히오 페레스',
-  'Valtteri Bottas':   '발테리 보타스',
-  'Guanyu Zhou':       '저우관위',
-  'Colton Herta':      '콜튼 헤르타',
-}
 
 const CONSTRUCTOR_NAMES: Record<string, string> = {
   'Red Bull Racing': '레드불',
@@ -224,6 +189,7 @@ export interface RaceResult {
   date: string
   flag: string
   city: string
+  raceLaps: number | null
   fastestLapDriver: string | null
   fastestLapTime: string | null
   fastestLapLap: number | null
@@ -271,13 +237,9 @@ interface JolpicaPracticeItem {
   laps: string
 }
 
-function stripAccents(s: string) {
-  return s.normalize('NFD').replace(/[̀-ͯ]/g, '')
-}
-
-function getDriverName(driver: { givenName?: string; familyName?: string }) {
+function getDriverName(driver: { givenName?: string; familyName?: string; driverId?: string }) {
   const fullName = `${driver.givenName ?? ''} ${driver.familyName ?? ''}`.trim()
-  return DRIVER_FULL_NAMES[fullName] ?? DRIVER_FULL_NAMES[stripAccents(fullName)] ?? fullName
+  return getDriverKrName(fullName, driver.driverId)
 }
 
 function getConstructorName(constructor: { name?: string }) {
@@ -337,6 +299,8 @@ export async function fetchRaceResult(year: number, round: number): Promise<Race
       }
     })
 
+    const raceLaps = results.find(r => r.position === 1)?.laps ?? null
+
     return {
       raceName: GP_NAMES[race.raceName] ?? race.raceName,
       circuitName: CIRCUIT_NAMES[circuitApiName] ?? circuitApiName,
@@ -344,6 +308,7 @@ export async function fetchRaceResult(year: number, round: number): Promise<Race
       date: race.date,
       flag: COUNTRY_CODES[race.Circuit.Location.country] ?? '',
       city: getCityName(race.Circuit.Location.locality ?? ''),
+      raceLaps,
       fastestLapDriver,
       fastestLapTime,
       fastestLapLap,
