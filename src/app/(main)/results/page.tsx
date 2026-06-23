@@ -22,6 +22,8 @@ import { fetchDriverStandings, fetchConstructorStandings } from '@/lib/f1Standin
 import ResultsControls from './ResultsControls'
 import ResultTabs, { type StandingChange, type ConstructorChange } from './ResultTabs'
 
+export const revalidate = 300
+
 const SEASONS = [2026, 2025]
 
 function todayString() {
@@ -340,6 +342,7 @@ export default async function ResultsPage({
   const circuitInfo = result?.circuitInfo ?? circuitInfoEarly ?? null
   const allRows = result?.results ?? []
   const city = result?.city ?? ''
+  const actualRaceLaps = result?.raceLaps ?? null
   const manualData = MANUAL_RACE_DATA[`${selectedSeason}-${selectedRound}`] ?? null
   const fastestPit = manualData?.fastestPitStop ?? null
   const driverOfTheDay = manualData?.driverOfTheDay ?? null
@@ -391,6 +394,8 @@ export default async function ResultsPage({
                     width={1200}
                     height={720}
                     className="block w-full"
+                    loading="eager"
+                    priority
                   />
                 </div>
               ) : null}
@@ -418,19 +423,17 @@ export default async function ResultsPage({
                       <p className="text-sm font-black text-[var(--text)]">{circuitInfo.firstGrandPrix}년</p>
                     </div>
                   )}
-                  {circuitInfo?.laps != null && (
+                  {(actualRaceLaps ?? circuitInfo?.laps) != null && (
                     <div>
                       <p className="text-[10px] font-bold text-[var(--muted)]">랩 수</p>
-                      <p className="text-sm font-black text-[var(--text)]">{circuitInfo.laps} 랩</p>
+                      <p className="text-sm font-black text-[var(--text)]">{actualRaceLaps ?? circuitInfo!.laps} 랩</p>
                     </div>
                   )}
-                  {(circuitInfo?.raceDistanceKm != null || (circuitInfo?.laps != null && circuitInfo?.lengthKm != null)) && (
+                  {circuitInfo?.lengthKm != null && (actualRaceLaps ?? circuitInfo?.laps) != null && (
                     <div>
                       <p className="text-[10px] font-bold text-[var(--muted)]">레이스 거리</p>
                       <p className="text-sm font-black text-[var(--text)]">
-                        {circuitInfo.raceDistanceKm != null
-                          ? circuitInfo.raceDistanceKm
-                          : (circuitInfo.laps! * circuitInfo.lengthKm).toFixed(3)} km
+                        {((actualRaceLaps ?? circuitInfo.laps!) * circuitInfo.lengthKm).toFixed(3)} km
                       </p>
                     </div>
                   )}
