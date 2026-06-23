@@ -1,4 +1,4 @@
-import { TEAM_COLORS } from './f1ResultsApi'
+import { TEAM_COLORS } from './teamColors'
 
 const DRIVER_KR_NAMES: Record<string, string> = {
   // ── 2020s ──

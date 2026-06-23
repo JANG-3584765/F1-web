@@ -1,5 +1,7 @@
 import { GP_NAMES, CIRCUIT_NAMES, COUNTRY_CODES } from './f1Api'
 import { getDriverKrName } from './f1StandingsApi'
+import { TEAM_COLORS } from './teamColors'
+export { TEAM_COLORS } from './teamColors'
 
 export interface CircuitInfo {
   laps: number | null
@@ -110,20 +112,6 @@ const CONSTRUCTOR_NAMES: Record<string, string> = {
   'Cadillac F1 Team': '캐딜락',
 }
 
-export const TEAM_COLORS: Record<string, string> = {
-  '레드불':      '#3671C6',
-  '맥라렌':      '#FF8000',
-  '페라리':      '#E8002D',
-  '메르세데스':  '#00D2BE',
-  '애스턴 마틴': '#229971',
-  '알핀':        '#0090D4',
-  '윌리엄스':    '#005AFF',
-  '레이싱 불스': '#6692FF',
-  '하스':        '#B91D1D',
-  '킥 자우버':   '#00E701',
-  '아우디':      '#9E9E9E',
-  '캐딜락':      '#C41E3A',
-}
 
 const STATUS_KR: Record<string, string> = {
   'Accident':         '사고',

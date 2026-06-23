@@ -1,4 +1,4 @@
-import { TEAM_COLORS } from './f1ResultsApi'
+import { TEAM_COLORS } from './teamColors'
 
 export interface ManualPitStop {
   driver: string    // 드라이버 이름 (한국어, DRIVER_FULL_NAMES 참고)
