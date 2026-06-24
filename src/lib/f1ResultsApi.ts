@@ -6,6 +6,7 @@ export { TEAM_COLORS } from './teamColors'
 export interface CircuitInfo {
   laps: number | null
   lengthKm: number
+  raceDistanceKm: number | null
   image: string
   lat?: number
   lon?: number
@@ -19,32 +20,35 @@ export interface CircuitLapRecord {
   year: number
 }
 
+// 서킷 길이(lengthKm)와 레이스 거리(raceDistanceKm)는 F1 공식 자료 기준.
+// laps × lengthKm ≠ raceDistanceKm인 경우가 대부분 — F1이 내부적으로 더 정밀한 수치를 사용하기 때문.
+// 표시는 반드시 raceDistanceKm를 직접 사용할 것.
 export const CIRCUIT_INFO: Record<string, CircuitInfo> = {
-  'Albert Park Grand Prix Circuit':  { laps: 58, lengthKm: 5.278, lat: -37.8497, lon: 144.9680, firstGrandPrix: 1996, circuitId: 'albert_park',   image: '앨버트 파크 서킷.png' },
-  'Shanghai International Circuit':  { laps: 56, lengthKm: 5.451, lat: 31.3389,  lon: 121.2198, firstGrandPrix: 2004, circuitId: 'shanghai',       image: '상하이 인터내셔널 서킷.png' },
-  'Suzuka Circuit':                  { laps: 53, lengthKm: 5.807, lat: 34.8431,  lon: 136.5408, firstGrandPrix: 1987, circuitId: 'suzuka',         image: '스즈카 서킷.png' },
-  'Bahrain International Circuit':   { laps: 57, lengthKm: 5.412, lat: 26.0325,  lon: 50.5106,  firstGrandPrix: 2004, circuitId: 'bahrain',        image: '바레인 인터내셔널 서킷.png' },
-  'Jeddah Corniche Circuit':         { laps: 50, lengthKm: 6.174, lat: 21.6319,  lon: 39.1044,  firstGrandPrix: 2021, circuitId: 'jeddah',         image: '제다 코니쉬 서킷.png' },
-  'Miami International Autodrome':   { laps: 57, lengthKm: 5.412, lat: 25.9580,  lon: -80.2389, firstGrandPrix: 2022, circuitId: 'miami',          image: '마이애미 인터내셔널 오토드롬.png' },
-  'Autodromo Enzo e Dino Ferrari':   { laps: 63, lengthKm: 4.909, lat: 44.3439,  lon: 11.7167,  firstGrandPrix: 1980, circuitId: 'imola',          image: '이몰라 서킷.jpg' },
-  'Circuit de Monaco':               { laps: 78, lengthKm: 3.337, lat: 43.7347,  lon: 7.4205,   firstGrandPrix: 1929, circuitId: 'monaco',         image: '시르퀴 드 모나코.png' },
-  'Circuit de Barcelona-Catalunya':  { laps: 66, lengthKm: 4.657, lat: 41.5700, lon: 2.2611, firstGrandPrix: 1991, circuitId: 'catalunya',     image: '시르쿠이트 데 바르셀로나.png' },
-  'Circuit Gilles Villeneuve':       { laps: 70, lengthKm: 4.361, lat: 45.5000,  lon: -73.5228, firstGrandPrix: 1978, circuitId: 'villeneuve',     image: '시르퀴 질 빌뇌브.png' },
-  'Red Bull Ring':                   { laps: 71, lengthKm: 4.326, lat: 47.2197,  lon: 14.7647,  firstGrandPrix: 1970, circuitId: 'red_bull_ring',  image: '레드불링.png' },
-  'Silverstone Circuit':             { laps: 52, lengthKm: 5.891, lat: 52.0786,  lon: -1.0169,  firstGrandPrix: 1950, circuitId: 'silverstone',    image: '실버스톤 서킷.png' },
-  'Circuit de Spa-Francorchamps':    { laps: 44, lengthKm: 7.004, lat: 50.4372,  lon: 5.9714,   firstGrandPrix: 1950, circuitId: 'spa',            image: '스파 프랑코샹 서킷.png' },
-  'Hungaroring':                     { laps: 70, lengthKm: 4.381, lat: 47.5789,  lon: 19.2486,  firstGrandPrix: 1986, circuitId: 'hungaroring',    image: '헝가로링.png' },
-  'Circuit Park Zandvoort':          { laps: 72, lengthKm: 4.259, lat: 52.3888,  lon: 4.5409,   firstGrandPrix: 1952, circuitId: 'zandvoort',      image: '잔드보르트 서킷.png' },
-  'Autodromo Nazionale di Monza':    { laps: 53, lengthKm: 5.793, lat: 45.6156,  lon: 9.2811,   firstGrandPrix: 1950, circuitId: 'monza',          image: '몬자서킷.png' },
-  'Baku City Circuit':               { laps: 51, lengthKm: 6.003, lat: 40.3725,  lon: 49.8533,  firstGrandPrix: 2016, circuitId: 'baku',           image: '바쿠 시티 서킷.png' },
-  'Marina Bay Street Circuit':       { laps: 62, lengthKm: 4.927, lat: 1.2914,   lon: 103.8640, firstGrandPrix: 2008, circuitId: 'marina_bay',     image: '마리나베이 서킷.png' },
-  'Circuit of the Americas':         { laps: 56, lengthKm: 5.513, lat: 30.1328,  lon: -97.6411, firstGrandPrix: 2012, circuitId: 'americas',       image: '서킷 오브 디 아메리카스.png' },
-  'Autódromo Hermanos Rodríguez':    { laps: 71, lengthKm: 4.304, lat: 19.4042,  lon: -99.0907, firstGrandPrix: 1963, circuitId: 'rodriguez',      image: '아우토드로모 에르마노스 로드리게스.png' },
-  'Autódromo José Carlos Pace':      { laps: 71, lengthKm: 4.309, lat: -23.7036, lon: -46.6997, firstGrandPrix: 1973, circuitId: 'interlagos',     image: '인터라고스 서킷.png' },
-  'Las Vegas Strip Street Circuit':  { laps: 50, lengthKm: 6.201, lat: 36.1147,  lon: -115.1730, firstGrandPrix: 2023, circuitId: 'vegas',         image: '라스베가스 스트립 서킷.png' },
-  'Losail International Circuit':    { laps: 57, lengthKm: 5.419, lat: 25.4900,  lon: 51.4542,  firstGrandPrix: 2021, circuitId: 'losail',         image: '루사일 인터내셔널 서킷.png' },
-  'Yas Marina Circuit':              { laps: 58, lengthKm: 5.281, lat: 24.4672,  lon: 54.6031,  firstGrandPrix: 2009, circuitId: 'yas_marina',     image: '야스 마리나 서킷.png' },
-  'Madring':                         { laps: null, lengthKm: 5.474, lat: 40.4153, lon: -3.5786,  firstGrandPrix: 2026,                              image: '마드링.png' },
+  'Albert Park Grand Prix Circuit':  { laps: 58, lengthKm: 5.278, raceDistanceKm: 306.124, lat: -37.8497, lon: 144.9680, firstGrandPrix: 1996, circuitId: 'albert_park',   image: '앨버트 파크 서킷.png' },
+  'Shanghai International Circuit':  { laps: 56, lengthKm: 5.451, raceDistanceKm: 305.066, lat: 31.3389,  lon: 121.2198, firstGrandPrix: 2004, circuitId: 'shanghai',      image: '상하이 인터내셔널 서킷.png' },
+  'Suzuka Circuit':                  { laps: 53, lengthKm: 5.807, raceDistanceKm: 307.471, lat: 34.8431,  lon: 136.5408, firstGrandPrix: 1987, circuitId: 'suzuka',        image: '스즈카 서킷.png' },
+  'Bahrain International Circuit':   { laps: 57, lengthKm: 5.412, raceDistanceKm: 308.238, lat: 26.0325,  lon: 50.5106,  firstGrandPrix: 2004, circuitId: 'bahrain',       image: '바레인 인터내셔널 서킷.png' },
+  'Jeddah Corniche Circuit':         { laps: 50, lengthKm: 6.176, raceDistanceKm: 308.450, lat: 21.6319,  lon: 39.1044,  firstGrandPrix: 2021, circuitId: 'jeddah',        image: '제다 코니쉬 서킷.png' },
+  'Miami International Autodrome':   { laps: 57, lengthKm: 5.412, raceDistanceKm: 308.326, lat: 25.9580,  lon: -80.2389, firstGrandPrix: 2022, circuitId: 'miami',         image: '마이애미 인터내셔널 오토드롬.png' },
+  'Autodromo Enzo e Dino Ferrari':   { laps: 63, lengthKm: 4.909, raceDistanceKm: 309.049, lat: 44.3439,  lon: 11.7167,  firstGrandPrix: 1980, circuitId: 'imola',         image: '이몰라 서킷.jpg' },
+  'Circuit de Monaco':               { laps: 78, lengthKm: 3.337, raceDistanceKm: 260.286, lat: 43.7347,  lon: 7.4205,   firstGrandPrix: 1929, circuitId: 'monaco',        image: '시르퀴 드 모나코.png' },
+  'Circuit de Barcelona-Catalunya':  { laps: 66, lengthKm: 4.655, raceDistanceKm: 307.104, lat: 41.5700,  lon: 2.2611,   firstGrandPrix: 1991, circuitId: 'catalunya',     image: '시르쿠이트 데 바르셀로나.png' },
+  'Circuit Gilles Villeneuve':       { laps: 70, lengthKm: 4.361, raceDistanceKm: 305.270, lat: 45.5000,  lon: -73.5228, firstGrandPrix: 1978, circuitId: 'villeneuve',    image: '시르퀴 질 빌뇌브.png' },
+  'Red Bull Ring':                   { laps: 71, lengthKm: 4.326, raceDistanceKm: 307.018, lat: 47.2197,  lon: 14.7647,  firstGrandPrix: 1970, circuitId: 'red_bull_ring', image: '레드불링.png' },
+  'Silverstone Circuit':             { laps: 52, lengthKm: 5.891, raceDistanceKm: 306.198, lat: 52.0786,  lon: -1.0169,  firstGrandPrix: 1950, circuitId: 'silverstone',   image: '실버스톤 서킷.png' },
+  'Circuit de Spa-Francorchamps':    { laps: 44, lengthKm: 7.004, raceDistanceKm: 308.052, lat: 50.4372,  lon: 5.9714,   firstGrandPrix: 1950, circuitId: 'spa',           image: '스파 프랑코샹 서킷.png' },
+  'Hungaroring':                     { laps: 70, lengthKm: 4.381, raceDistanceKm: 306.630, lat: 47.5789,  lon: 19.2486,  firstGrandPrix: 1986, circuitId: 'hungaroring',   image: '헝가로링.png' },
+  'Circuit Park Zandvoort':          { laps: 72, lengthKm: 4.259, raceDistanceKm: 306.587, lat: 52.3888,  lon: 4.5409,   firstGrandPrix: 1952, circuitId: 'zandvoort',     image: '잔드보르트 서킷.png' },
+  'Autodromo Nazionale di Monza':    { laps: 53, lengthKm: 5.793, raceDistanceKm: 306.720, lat: 45.6156,  lon: 9.2811,   firstGrandPrix: 1950, circuitId: 'monza',         image: '몬자서킷.png' },
+  'Baku City Circuit':               { laps: 51, lengthKm: 6.003, raceDistanceKm: 306.049, lat: 40.3725,  lon: 49.8533,  firstGrandPrix: 2016, circuitId: 'baku',          image: '바쿠 시티 서킷.png' },
+  'Marina Bay Street Circuit':       { laps: 62, lengthKm: 4.927, raceDistanceKm: 305.337, lat: 1.2914,   lon: 103.8640, firstGrandPrix: 2008, circuitId: 'marina_bay',    image: '마리나베이 서킷.png' },
+  'Circuit of the Americas':         { laps: 56, lengthKm: 5.513, raceDistanceKm: 308.405, lat: 30.1328,  lon: -97.6411, firstGrandPrix: 2012, circuitId: 'americas',      image: '서킷 오브 디 아메리카스.png' },
+  'Autódromo Hermanos Rodríguez':    { laps: 71, lengthKm: 4.304, raceDistanceKm: 305.354, lat: 19.4042,  lon: -99.0907, firstGrandPrix: 1963, circuitId: 'rodriguez',     image: '아우토드로모 에르마노스 로드리게스.png' },
+  'Autódromo José Carlos Pace':      { laps: 71, lengthKm: 4.309, raceDistanceKm: 305.879, lat: -23.7036, lon: -46.6997, firstGrandPrix: 1973, circuitId: 'interlagos',    image: '인터라고스 서킷.png' },
+  'Las Vegas Strip Street Circuit':  { laps: 50, lengthKm: 6.201, raceDistanceKm: 310.050, lat: 36.1147,  lon: -115.1730, firstGrandPrix: 2023, circuitId: 'vegas',        image: '라스베가스 스트립 서킷.png' },
+  'Losail International Circuit':    { laps: 57, lengthKm: 5.419, raceDistanceKm: 308.826, lat: 25.4900,  lon: 51.4542,  firstGrandPrix: 2021, circuitId: 'losail',        image: '루사일 인터내셔널 서킷.png' },
+  'Yas Marina Circuit':              { laps: 58, lengthKm: 5.554, raceDistanceKm: 305.355, lat: 24.4672,  lon: 54.6031,  firstGrandPrix: 2009, circuitId: 'yas_marina',    image: '야스 마리나 서킷.png' },
+  'Madring':                         { laps: 57, lengthKm: 5.474, raceDistanceKm: 312.018, lat: 40.4153,  lon: -3.5786,  firstGrandPrix: 2026,                             image: '마드링.png' },
 }
 
 export function getCircuitInfo(circuitName: string): CircuitInfo | null {

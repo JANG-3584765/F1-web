@@ -429,11 +429,11 @@ export default async function ResultsPage({
                       <p className="text-sm font-black text-[var(--text)]">{actualRaceLaps ?? circuitInfo!.laps} 랩</p>
                     </div>
                   )}
-                  {circuitInfo?.lengthKm != null && (actualRaceLaps ?? circuitInfo?.laps) != null && (
+                  {circuitInfo?.raceDistanceKm != null && (
                     <div>
                       <p className="text-[10px] font-bold text-[var(--muted)]">레이스 거리</p>
                       <p className="text-sm font-black text-[var(--text)]">
-                        {((actualRaceLaps ?? circuitInfo.laps!) * circuitInfo.lengthKm).toFixed(3)} km
+                        {circuitInfo.raceDistanceKm.toFixed(3)} km
                       </p>
                     </div>
                   )}
