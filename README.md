@@ -4,295 +4,258 @@
 
 # WhatisF1
 
-**포뮬러 1 팬을 위한 올인원 데이터 플랫폼**
+**포뮬러 1 팬을 위한 올인원 정보 플랫폼 — 실제 운영 중인 서비스**
 
-뉴스 · 하이라이트 · 경기 일정 · 결과 · 순위 · 팬 투표를 한 곳에서
+뉴스 · 하이라이트 · 경기 일정 · 레이스 결과 · 드라이버/컨스트럭터 순위 · 팬 투표를 한 곳에서
 
 [![배포](https://img.shields.io/badge/배포-Vercel-black?style=flat-square&logo=vercel)](https://f1-web-delta.vercel.app)
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)](https://nextjs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
+[![Next.js](https://img.shields.io/badge/Next.js-16.2.1-black?style=flat-square&logo=next.js)](https://nextjs.org)
+[![React](https://img.shields.io/badge/React-19.2-61DAFB?style=flat-square&logo=react)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5_strict-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38BDF8?style=flat-square&logo=tailwindcss)](https://tailwindcss.com)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=flat-square&logo=supabase)](https://supabase.com)
 
-🔗 **[f1-web-delta.vercel.app](https://f1-web-delta.vercel.app)** | 📸 **[Instagram @what_is_f1__](https://www.instagram.com/what_is_f1__)**
+🔗 **[f1-web-delta.vercel.app](https://f1-web-delta.vercel.app)** &nbsp;|&nbsp; 📸 **[Instagram @what_is_f1__](https://www.instagram.com/what_is_f1__)**
 
 </div>
 
 ---
 
-## 📖 프로젝트 소개
+## 프로젝트 개요
 
-바닐라 JS로 제작한 원본 F1 정보 사이트를 **Next.js / React 기반으로 전면 재이식**한 프로젝트입니다.
+바닐라 JS로 제작한 F1 정보 사이트를 **Next.js / React 기반으로 전면 재구축**한 프로젝트입니다. 단순 포팅을 넘어 관리자 뉴스 승인 시스템, 실시간 번역 에디터, OAuth 인증, ISR 캐시 전략, Supabase 기반 서버 상태 관리 등 프로덕션 수준의 기능을 직접 설계하고 운영 중입니다.
 
-단순한 포팅을 넘어 뉴스 승인 시스템, 관리자 번역 에디터, OAuth 인증, ISR 캐시 전략 등 실전 수준의 기능을 직접 설계·구현하며 CS 기초와 풀스택 배포 경험을 쌓는 것을 목적으로 합니다.
-
----
-
-## 🛠 Tech Stack
-
-| 분류 | 기술 |
-|------|------|
-| **Framework** | Next.js 16 (App Router) |
-| **Language** | TypeScript 5 (strict mode) |
-| **Styling** | Tailwind CSS v4 |
-| **Auth** | Auth.js v5 — Google · Kakao OAuth (JWT 전략) |
-| **Database** | Supabase (PostgreSQL) |
-| **Server State** | TanStack Query v5 |
-| **External APIs** | Jolpica F1 API, YouTube Data API v3 |
-| **Deployment** | Vercel |
-| **RSS Parser** | xml2js |
-| **국기 아이콘** | flag-icons |
+- **총 라우트:** 15개 페이지 + 8개 API Route
+- **외부 API 연동:** Jolpica F1, YouTube Data API v3, OpenF1, Open-Meteo 4종
+- **RSS 수집:** 8개 영문 F1 매체 → 한국어 번역 승인 후 서비스
+- **하이라이트:** YouTube 플레이리스트 40개 자동 수집 (공식 F1 · 한국 인플루언서 채널)
+- **서킷 이미지:** 25개 수록
+- **실제 서비스 운영 중** (Vercel + Instagram 계정 연동)
 
 ---
 
-## 🗂 프로젝트 구조
+## 기술 스택
 
-```
-F1-web/
-├── public/
-│   └── images/
-│       ├── circuits/          # 서킷 이미지 25개
-│       └── common/            # 로고 등 공통 이미지
-│
-├── src/
-│   ├── app/
-│   │   ├── (main)/            # 공개 라우트 그룹
-│   │   │   ├── page.tsx       # 홈 — 다음 레이스, 최신 뉴스, 순위 TOP3, 팬 투표 CTA
-│   │   │   ├── news/
-│   │   │   │   ├── page.tsx           # 뉴스 목록 (날짜 탭 + 매체 필터)
-│   │   │   │   └── [slug]/page.tsx    # 뉴스 상세 페이지
-│   │   │   ├── highlights/
-│   │   │   │   └── page.tsx           # 하이라이트 영상 (3축 필터)
-│   │   │   ├── schedules/
-│   │   │   │   └── page.tsx           # 경기 일정 (2025/2026 시즌)
-│   │   │   ├── results/
-│   │   │   │   └── page.tsx           # 경기 결과 (세션별 탭)
-│   │   │   ├── standings/
-│   │   │   │   └── page.tsx           # 드라이버/컨스트럭터 순위
-│   │   │   └── prediction/
-│   │   │       └── page.tsx           # 팬 투표
-│   │   │
-│   │   ├── api/               # Next.js API Route 핸들러
-│   │   │   ├── news/
-│   │   │   │   ├── fetch/     # RSS 수집 + Supabase 저장
-│   │   │   │   ├── publish/   # 기사 공개 (PATCH) + revalidatePath
-│   │   │   │   └── translate/ # 한국어 번역 저장
-│   │   │   └── standings/
-│   │   │       └── search/    # 드라이버/팀 이름 검색
-│   │   │
-│   │   ├── policy/            # 정책 페이지
-│   │   │   ├── terms/         # 이용약관
-│   │   │   ├── privacy/       # 개인정보처리방침
-│   │   │   └── policy/        # 운영정책
-│   │   │
-│   │   └── layout.tsx         # 루트 레이아웃 (메타데이터, 폰트, Provider)
-│   │
-│   ├── components/
-│   │   ├── Header.tsx         # 네비게이션 + 다크모드 토글 + 모바일 햄버거
-│   │   ├── Footer.tsx         # 소셜 링크 + 법적 고지 + 정책 링크
-│   │   └── Providers.tsx      # TanStack Query + Auth.js Provider 래퍼
-│   │
-│   └── lib/
-│       ├── f1api.ts           # Jolpica F1 API 클라이언트 (일정/결과/순위)
-│       ├── youtube.ts         # YouTube Data API v3 클라이언트
-│       ├── supabase.ts        # Supabase 클라이언트 초기화
-│       └── utils.ts           # 날짜 포맷, slug 인코딩 등 유틸
-│
-├── next.config.ts             # 이미지 허용 도메인 8개, poweredByHeader 제거
-├── tsconfig.json
-├── eslint.config.mjs
-└── package.json
-```
+| 분류 | 기술 | 비고 |
+|------|------|------|
+| **Framework** | Next.js 16.2.1 (App Router) | SSG / ISR / SSR / CSR 혼용 |
+| **Language** | TypeScript 5 (strict mode) | 전 파일 타입 안전성 적용 |
+| **UI** | React 19.2 | Server / Client Component 분리 |
+| **Styling** | Tailwind CSS v4 | CSS Variables 기반 다크모드 |
+| **Server State** | TanStack Query v5.100.10 | staleTime 폴링, optimistic update |
+| **Auth** | Auth.js v5 beta (next-auth) | Google · Kakao OAuth, JWT 전략 |
+| **Database** | Supabase (PostgreSQL) | RLS, 서비스 롤 키 분리 |
+| **Deployment** | Vercel | CI/CD 자동화, 환경변수 관리 |
+| **External APIs** | Jolpica F1 · YouTube Data API v3 · OpenF1 · Open-Meteo | |
+| **RSS Parser** | xml2js | 8개 매체 피드 파싱 |
+| **Icons** | flag-icons | 국가 국기 CSS 클래스 |
 
 ---
 
-## ✨ 주요 기능
+## 렌더링 전략 분포
 
-### 🏠 홈 (`/`)
-- 다음 레이스 카운트다운 및 세션 일정 표시
-- 최신 뉴스 3건 프리뷰
-- 최신 하이라이트 3건 프리뷰
-- 드라이버/컨스트럭터 순위 TOP 3
-- 팬 투표 CTA
+| 전략 | 페이지 | 선택 이유 |
+|------|--------|-----------|
+| **SSG** | `/guide`, `/regulations`, `/policy/*` | 변경 없는 정적 콘텐츠 |
+| **ISR 30분** | `/` (홈) | 뉴스·하이라이트 일 수회 변경 |
+| **ISR 1시간** | `/highlights`, `/schedules`, `/standings` | 레이스 후에만 갱신되는 데이터 |
+| **ISR 5분** | `/news`, `/results` | 뉴스 발행 즉각성 + 레이스 중 결과 |
+| **SSR** | `/login`, `/signup` | 세션 상태 캐시 불가 |
+| **100% CSR** | `/prediction` | localStorage + useSession 의존 |
 
-### 📰 뉴스 (`/news`)
-8개 RSS 피드(Autosport · Motorsport · BBC Sport · RaceFans · The Race · Crash.net · MSWeek · GPFans)를 집계하여 한국어로 제공합니다.
+---
 
+## 페이지별 구현 내역
+
+### 홈 (`/`)
+- 다음 레이스 카운트다운 (1초 단위 갱신, `setInterval` + 클린업)
+- 최신 뉴스 3건 · 최신 하이라이트 3건 프리뷰
+- 드라이버/컨스트럭터 순위 TOP3
+- 팬 투표 CTA 배너
+- ISR 30분 캐시 + `Promise.all` 4개 API 병렬 호출
+
+### 뉴스 (`/news`, `/news/[slug]`)
+- **RSS 수집 매체 8개:** Autosport · Motorsport · BBC Sport · RaceFans · The Race · Crash.net · MSWeek · GPFans
 - 날짜별 탭 UI + 매체 필터 + 가로 스크롤
-- 기사별 이모지 반응 (Supabase `news_reactions` 저장, 로그인 기반)
-- 내부 상세 페이지 `/news/[slug]` — Base64 slug, 원문 링크 별도 제공
-- 미번역 기사에 **EN 뱃지** 표시
-- **관리자 전용 인라인 번역 에디터** — 제목/본문 한국어 번역 후 "공개하기"
-- **승인 시스템**: 신규 수집 기사는 `is_published = false` → 관리자 번역 승인 후 공개
-  - 미승인 기사는 7일 경과 시 자동 삭제
-- **ISR 5분 캐시** + 공개 시 `revalidatePath` 즉시 무효화 → ~5초 내 전체 반영
+- **관리자 전용 인라인 번역 에디터** — 제목·본문 한국어 번역 후 단계적 공개
+- **승인 시스템:** 수집 기사 기본값 `is_published = false` → 관리자 번역 후 공개
+  - 미승인 기사 7일 경과 시 Supabase 자동 삭제
+- **공개 즉시 반영:** `revalidatePath('/news')` 호출로 ISR 캐시 무효화 → ~5초 내 전체 노출
+- 기사별 이모지 반응 저장 (`news_reactions` 테이블, 세션 기반)
+- `/news/[slug]`: Base64 URL 슬러그 인코딩 · 원문 링크 별도 제공 · 미번역 기사 EN 뱃지
+- TanStack Query `staleTime: 30s` 폴링으로 관리자 화면 실시간 동기화
 
-#### 뉴스 공개 흐름
+### 하이라이트 (`/highlights`)
+- **YouTube 플레이리스트 40개** 자동 수집
+  - 공식 F1 채널 (F1 · F2 · F3 · eSports)
+  - 쿠팡플레이 (시즌·종류 키워드 자동 감지)
+  - 한국 인플루언서 채널 3개 (원투피니시 · Box to Pass · 퍼플섹터)
+- `Promise.allSettled` 병렬 수집 — 채널 하나 실패해도 나머지 정상 노출
+- 시즌 / 콘텐츠 종류 / 채널 **3축 독립 필터** + `useMemo` 다단계 캐싱
+- 쇼츠(60초 이하) 자동 감지 · 슬라이더 / 그리드 뷰 전환
+- ISR 1시간 캐시
 
-```
-관리자 "공개하기" 클릭
-  → PATCH /api/news/publish
-  → Supabase: is_published = true
-  → revalidatePath('/news') — ISR 캐시 즉시 무효화
-  → 관리자 화면: "미승인" 배지 즉시 사라짐 (optimistic update)
-  → 일반 사용자: 다음 /news 접속 시 해당 기사 노출
-```
+### 경기 일정 (`/schedules`)
+- Jolpica F1 API 연동 — 2025 / 2026 시즌 지원
+- `searchParams` Promise 처리 (Next.js 15+ 변경 사항 대응)
+- URL 상태 기반 시즌 전환 (`router.push`)
+- 라운드별 카드 UI (서킷 · 국가 · 세션 일정 · 결과 페이지 링크)
 
-#### DB 일괄 공개 (초기 마이그레이션 시)
+### 경기 결과 (`/results`)
+- 레이스 · 퀄리파잉 · 스프린트 · FP1/2/3 · 피트스탑 · 타이어 전략 **6개 세션 탭**
+- 가용 세션만 탭으로 자동 표시 (스프린트 없는 라운드에서 탭 미표시)
+- Suspense 지연 로딩 — 빠른 데이터 먼저 표시 후 느린 데이터 점진적 로드
+- **서킷 정보 카드:** 서킷 이미지 25개, 공식 레이스 거리, 랩 수, 첫 그랑프리, 랩 레코드
+  - 레이스 거리: formula1.com 공식 데이터 직접 저장 (계산식 사용 안 함)
+- **날씨 정보:**
+  - 과거 레이스(2023년 이후): OpenF1 서킷 센서 실측값 (기온·트랙 온도·습도·풍속·강수)
+  - 미래 레이스 / 센서 없는 경우: Open-Meteo 예보 API
+- **레이스 통계 배너:** 완주자 수 / DNF 수 / 피트스탑 수 / 패스티스트 랩
+- **수동 입력 데이터 구조 (`manualRaceData`):** 패스티스트 피트스탑 · 드라이버 오브 더 데이 (API 미제공 항목)
+- 드롭다운 시즌·라운드 선택 시 즉시 자동 이동 (`onChange` 핸들러)
+- LCP 최적화: 서킷 이미지 `priority + loading="eager"` 적용
+- ISR 5분 캐시
 
-```sql
--- 번역 완료 기사만
-UPDATE news_translations SET is_published = true WHERE title_kr IS NOT NULL;
+### 순위 (`/standings`)
 
--- 전체 공개
-UPDATE news_translations SET is_published = true;
-```
-
-### 🎬 하이라이트 (`/highlights`)
-- YouTube Data API v3, 플레이리스트 13개 자동 수집
-- **ISR 1시간 캐시**
-- 시즌 / 콘텐츠 종류 / 채널 **3축 독립 필터**
-- 쇼츠 자동 감지, 슬라이더 / 그리드 뷰 전환
-
-### 📅 경기 일정 (`/schedules`)
-- Jolpica F1 API 연동 — **2025 / 2026 시즌** 지원
-- 라운드별 카드 UI (서킷 · 국가 · 날짜 표시)
-- 결과 페이지 직접 연결
-
-### 🏆 경기 결과 (`/results`)
-- 레이스 · 퀄리파잉 · 스프린트 · FP1/2/3 · 피트스탑 · 타이어 전략 데이터
-- 가용 세션만 탭으로 자동 표시
-- 서킷 이미지 25개 수록
-
-### 📊 순위 (`/standings`)
-
-#### 현 시즌 순위 테이블
+**현 시즌 순위**
 - 드라이버 / 컨스트럭터 탭 전환
-- **포디움 컬럼**: 레이스 결과 API에서 P1~P3 집계, 당시 우승 횟수와 별도 표시
-- **순위 변동**: 이전 라운드 대비 ▲N(초록) / ▼N(빨강) / —(동일) 표시 — 현 라운드와 직전 라운드 standings를 병렬 호출해 비교
-- 팀 컬러 도트, 국기 아이콘, 드라이버 코드(예: VER) 표시
-- 한글 이름 단독 표시 (영문 병기 제거)
-- 컨스트럭터 챔피언십 시작 연도(1958) 이전 시즌 선택 시 탭 비활성 + 안내
+- **포디움 컬럼:** 레이스 결과 API에서 P1~P3 집계, 우승/포디움 횟수 구분 표시
+- **순위 변동:** 직전 라운드 standings 병렬 호출 후 비교 → ▲N(초록) / ▼N(빨강) / — 표시
+- 팀 컬러 도트 · 국기 · 드라이버 코드(VER 등) 표시
+- 드라이버 이름 한국어 단독 표시 (영문 병기 제거)
+- 컨스트럭터 챔피언십 시작(1958년) 이전 시즌 선택 시 탭 자동 비활성화
 - 스켈레톤 로딩 UI (`loading.tsx`)
 
-#### 역대 시즌 검색 (`/api/standings/search`)
+**역대 시즌 검색 (1950~현재)**
+- Supabase `f1_standings` 테이블 직접 조회
+- **성능:** Jolpica API 직접 호출 대비 **~70초 → ~2초** 단축
+- `name.ilike + original_name.ilike` OR 필터 — 한국어·영어 동시 검색
+- 특수문자 `,()` 사전 제거 (PostgREST OR 필터 파싱 오류 방지)
+- 1900s(~1999) / 2000s(2000~) `Promise.all` 병렬 조회
 
-**현재 아키텍처 (Supabase 캐시 기반):**
-- 1950~현재 전 시즌 드라이버/컨스트럭터 순위 데이터를 Supabase `f1_standings` 테이블에 사전 저장
-- 검색 쿼리는 외부 API 호출 없이 Supabase에서 직접 조회 → 수십 ms 내 응답
+### 팬 투표 (`/prediction`)
+- 2026 시즌 12개 질문 (단일 선택 · 복수 선택 · 순위 선택 3종)
+- **오프라인 퍼스트:** localStorage 즉시 저장 → 로그인 시 Supabase 동기화
+- **디바운스 서버 동기화:** 마지막 변경 후 1.5초 후 API 호출 (불필요한 호출 방지)
+- Supabase `upsert` — 제출 후 수정 시 INSERT/UPDATE 자동 분기
+- 제출 후 잠금 · 초기화 기능
+- **팀 컬러 카드 시스템:** 드라이버/팀별 공식 컬러 왼쪽 바 + 선택 시 배경 틴트
+- 단일 선택 항목 재클릭 시 선택 해제 (토글)
+- 복수 선택(Q11·12) 최대 3개 제한
 
-**기존 구조 (Jolpica API 직접 호출)와 비교:**
-```
-기존: 검색 시마다 77시즌 × 2개 API(드라이버+컨스트럭터) = ~150 API 호출 → ~70초
-현재: Supabase 쿼리 1회 → 수십 ms
-```
+### 가이드 / 용어사전 (`/guide`, `/regulations`)
+- SSG — 빌드 시 완성, API 호출 없음
+- `src/data/` 폴더 기반 정적 데이터 (팀·드라이버·규정 정보)
+- **툴팁 각주 시스템 (`Term` 컴포넌트):** 용어에 빨간 점선 밑줄 + 호버 시 설명 팝업
+  - `glossary.ts` 22개 용어 정의
+  - div → span 교체 (인라인 요소 내 블록 요소 중첩 Hydration 오류 수정)
 
-**데이터 초기화 (`npm run seed:standings`):**
-```bash
-# 1950~현재 전 시즌 데이터를 Supabase에 일괄 저장 (최초 1회 실행)
-npm run seed:standings
-```
-- 시즌별 순차 처리 + 요청 간 600ms 딜레이 + 최대 3회 재시도로 Jolpica API rate limit 회피
-- upsert 방식이므로 재실행 시 기존 데이터 안전하게 덮어씀
-- 시즌 종료 후 신규 연도 데이터 갱신 시 재실행
+### 인증 (`/login`, `/signup`)
+- Google · Kakao OAuth (Auth.js v5, JWT 세션 전략)
+- `session.user.id` 주입으로 Supabase 사용자 연동
+- `supabaseAdmin` (서비스 롤 키, 서버 전용) / `supabaseClient` (anon 키, 브라우저) 분리
+- `trustHost: true` — Vercel 프록시 환경 OAuth 콜백 오류 해결
 
-**검색 병렬 처리 (현재):**
-- 1900s(1950~1999)와 2000s(2000~현재)를 `Promise.all`로 동시 처리
-- 두 시대 모두 활동한 드라이버/팀은 2000s 그룹에 병합
-
-#### 팀 컬러 시스템
-- `src/data/f1-2026.ts`를 단일 소스(Single Source of Truth)로 지정
-- 순위 API(`f1StandingsApi.ts`, `f1ResultsApi.ts`)의 `TEAM_COLORS`를 완전 동기화
-- 아우디 색상 오류(형광초록 `#00E701` → `#9E9E9E`) 등 누적 오탈자 일괄 수정
-
-### 🗳 팬 투표 (`/prediction`)
-- Supabase `season_predictions` 테이블에 시즌 단위 저장 (로그인 기반)
-- 단일 선택 · 복수 선택 · 순위 선택(1·2·3위) 3종 질문 유형
-- 제출 후 잠금, 초기화 버튼 포함
-- 팀, 드라이버별 상징 색깔 바 추가로 UI 개선
-
-#### 팀 컬러 시각화
-- 2026 시즌 전체 드라이버 24명 + 팀 11개의 공식 팀 컬러 정의 (`src/data/f1-2026.ts`)
-- **미선택 상태**: 선택지 왼쪽에 3px 팀 컬러 바
-- **선택 상태**: 팀 컬러 배경 틴트 + 테두리 + 텍스트 컬러 하이라이트
-- Tailwind 동적 클래스 제한으로 인해 색상은 인라인 `style` prop으로 적용
-
-#### 선택 UX 개선
-- **단일 선택 질문(Q3·5·6·7·8·9)**: 동일 항목 재클릭 시 선택 해제(토글)
-- **복수 선택(Q11·12 — 응원팀/드라이버)**: 최대 3개까지 선택 가능, 초과 시 신규 선택 불가
-
-### 🔐 인증 (Auth)
-- Google · Kakao OAuth (Auth.js v5, JWT 전략)
-- 헤더에 프로필 이미지 및 이름 표시
-
-### 📄 정책 페이지
-- 이용약관 · 개인정보처리방침 · 운영정책
+### 전역 레이아웃 (`layout.tsx`)
+- **FOUC 방지:** `<head>` 내 인라인 스크립트로 `data-theme` 선적용 후 CSS 로드
+- **CSS Variables 다크모드:** `--bg`, `--text`, `--accent` 등 전역 변수, `html[data-theme="dark"]`로 오버라이드
+- `Providers.tsx`: `SessionProvider` + `QueryClientProvider` 래핑
+- 3열 헤더 그리드 (로고 · 네비게이션 · 유저 영역)
+- 인앱 브라우저 감지 알림 (`InAppBrowserNotice`)
 
 ---
 
-## 🗄 Supabase 테이블
+## 주요 성능 개선 이력 (수치 포함)
+
+| 항목 | 개선 전 | 개선 후 | 방법 |
+|------|--------|--------|------|
+| 역대 순위 검색 응답 시간 | ~70초 | ~2초 | Jolpica API 순차 호출 → Supabase 테이블 직접 조회 |
+| 역대 순위 검색 API 호출 수 | ~150회 (77시즌 × 2) | 1회 | Supabase 사전 시딩 (`npm run seed:standings`) |
+| 하이라이트 채널 장애 대응 | 전체 실패 | 실패 채널만 제외 | `Promise.all` → `Promise.allSettled` |
+| 결과 페이지 초기 로드 | 전체 대기 | 빠른 데이터 선표시 | Suspense 분리 + 느린 API 지연 처리 |
+| 서킷 이미지 LCP | 지연 로드 | 즉시 로드 | `priority + loading="eager"` 적용 |
+| 레이스 거리 정확도 | 계산값 (최대 1.5km 오차) | 공식값 | formula1.com 공식 데이터 직접 저장 |
+
+---
+
+## 해결한 주요 버그
+
+| 커밋 | 버그 | 원인 | 해결 |
+|------|------|------|------|
+| `0c34b13` | 순위·결과·하이라이트 3개 페이지 500 에러 | `TEAM_COLORS` 순환 의존성 (`A→B→A`) | `teamColors.ts`로 분리 |
+| `7e9e589` | 관리자 공개 후 일반 사용자에게 기사 미노출 | `rowMap` 생성 후 INSERT → Map에 신규 항목 없음 | `?? false` → `?? true` |
+| `7e9e589` | Vercel 배포 후 OAuth 콜백이 localhost로 이동 | Vercel 프록시 Host 헤더 불신 | `trustHost: true` 추가 |
+| `6a2d3c0` | 아우디 팀 컬러 형광초록으로 표시 | `TEAM_COLORS` 소스 불일치 | `f1-2026.ts` 단일 소스 통일 |
+| `32f99f6` | 검색어 `,()` 포함 시 Supabase OR 필터 오류 | PostgREST 특수문자 파싱 | 사전 sanitize `replace(/[,()]/g, '')` |
+| `37edf88` | 가이드 페이지 `Hydration failed` | `<p>` 안에 `<div>` (블록 중첩) | `Term` 컴포넌트 `div → span` |
+
+---
+
+## Supabase 스키마
 
 | 테이블 | 용도 |
 |--------|------|
-| `news_translations` | RSS 기사 캐시 + 한국어 번역 + 승인 상태 저장 |
+| `news_translations` | RSS 기사 캐시 + 한국어 번역 + 승인 상태 |
 | `news_reactions` | 기사별 이모지 반응 (세션 기반) |
-| `season_predictions` | 팬 투표 답변 (user_id + season 복합 키, upsert) |
-| `f1_standings` | 1950~현재 전 시즌 드라이버/컨스트럭터 순위 캐시 — 역대 검색 고속화용 |
-
-### `f1_standings` 스키마
+| `season_predictions` | 팬 투표 답변 (user_id + season 복합 키) |
+| `f1_standings` | 1950~현재 전 시즌 드라이버/컨스트럭터 순위 캐시 |
 
 ```sql
+-- f1_standings: 역대 순위 검색 고속화
 CREATE TABLE f1_standings (
   id            BIGSERIAL PRIMARY KEY,
   type          TEXT    NOT NULL CHECK (type IN ('driver', 'constructor')),
-  entity_id     TEXT    NOT NULL,   -- driverId 또는 constructorId
+  entity_id     TEXT    NOT NULL,
   name          TEXT,               -- 한국어 이름
-  original_name TEXT,               -- 영어 원문 이름
+  original_name TEXT,               -- 영어 원문
   year          INT     NOT NULL,
   position      INT,
   points        NUMERIC NOT NULL DEFAULT 0,
   wins          INT     NOT NULL DEFAULT 0,
-  team          TEXT,               -- 드라이버 소속팀 (컨스트럭터는 NULL)
+  team          TEXT,
   team_color    TEXT    NOT NULL DEFAULT '#888888'
 );
 
 CREATE UNIQUE INDEX f1_standings_unique ON f1_standings (type, entity_id, year);
 CREATE        INDEX f1_standings_name   ON f1_standings (name);
 CREATE        INDEX f1_standings_orig   ON f1_standings (original_name);
-CREATE        INDEX f1_standings_entity ON f1_standings (type, entity_id);
 ```
 
 ---
 
-## ⚙️ 캐싱 전략
+## API Route 목록
 
-| 페이지/API | 전략 | 갱신 조건 |
-|-----------|------|----------|
-| `/news` | ISR 5분 | 관리자 기사 공개 시 `revalidatePath` 즉시 무효화 |
-| `/highlights` | ISR 1시간 | 자동 만료 |
-| `/schedules`, `/results` | Jolpica API `revalidate: 3600` | 자동 만료 |
-| `/standings` (현 시즌) | Jolpica API `revalidate: 3600` + 이전 라운드 비교 | 자동 만료 |
-| `/api/standings/search` | Supabase 쿼리 (캐시 불필요) | `npm run seed:standings` 재실행 시 갱신 |
+| 엔드포인트 | 메서드 | 용도 |
+|-----------|--------|------|
+| `/api/auth/[...nextauth]` | GET · POST | Auth.js OAuth 콜백 처리 |
+| `/api/news/publish` | PATCH | 기사 공개 + `revalidatePath` |
+| `/api/news/translate` | POST · PATCH | 한국어 번역 저장 |
+| `/api/news/react` | POST | 이모지 반응 추가 |
+| `/api/news/reactions` | GET | 기사별 반응 조회 |
+| `/api/standings/search` | GET | 드라이버/팀 역대 순위 검색 |
+| `/api/prediction` | GET · POST | 팬 투표 조회 · 저장 |
+| `/api/feedback` | POST | 피드백 저장 |
 
 ---
 
-## 🚀 시작하기
+## 개발 환경 설정
 
 ```bash
 # 의존성 설치
 npm install
 
-# 개발 서버 실행
+# 개발 서버
 npm run dev
 
 # 빌드
 npm run build
 
-# 역대 순위 데이터 Supabase에 초기화 (최초 1회 또는 시즌 종료 후 갱신)
+# 역대 순위 데이터 Supabase 초기화 (최초 1회 또는 시즌 종료 후)
 npm run seed:standings
 ```
 
-### 환경 변수 설정 (`.env.local`)
+### 환경 변수 (`.env.local`)
 
 ```env
 AUTH_SECRET=
@@ -303,80 +266,44 @@ AUTH_KAKAO_CLIENT_SECRET=
 YOUTUBE_API_KEY=
 SUPABASE_URL=
 SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=   # seed:standings 및 서버 사이드 DB 쓰기에 필요
+SUPABASE_SERVICE_ROLE_KEY=
 ADMIN_EMAIL=
 NEXT_PUBLIC_ADMIN_EMAIL=
 ```
 
 ---
 
-## 📌 개발 배경 및 목적
+## 앞으로 할 것 (Roadmap)
 
-| 목표 | 내용 |
-|------|------|
-| 프레임워크 전환 | 바닐라 JS → Next.js App Router로 이식하며 SSR/ISR 원리 체득 |
-| 풀스택 경험 | API Route 직접 설계, Supabase DB 스키마 설계 및 운영 |
-| 인증 구현 | Auth.js v5 JWT 전략으로 OAuth 플로우 직접 구현 |
-| 배포 자동화 | Vercel CI/CD 연동, 환경 변수 관리 |
-| 콘텐츠 운영 | RSS 집계 + 번역 승인 시스템으로 실제 서비스 운영 경험 |
+### 코드 품질 · 구조 개선
+- [ ] 새 레포에서 페이지 단위 재구축 (이해 → 직접 작성 → 개선 순서로 이식)
+- [ ] 공통 컴포넌트 추출 및 재사용성 개선
+- [ ] API 응답 타입 정의 통일 (`src/types/`)
+- [ ] 에러 바운더리 및 폴백 UI 보강
 
----
+### 기능 개선
+- [ ] **하이라이트:** 키워드 검색 필터 추가
+- [ ] **뉴스:** UI/UX 전반 재설계, 초기 로드 성능 개선
+- [ ] **결과 페이지:**
+  - [ ] 라운드별 챔피언십 순위 변동 섹션
+  - [ ] 드라이버별 포디움/우승 통계 섹션
+  - [ ] 폴 포지션 · 패스티스트 피트스탑 API 연동 (현재 수동 입력)
+- [ ] **홈:** F1 입문자용 용어 · 팀 · 드라이버 탭 섹션 추가
 
-## 🗺 개발 현황 & 로드맵
-
-### ✅ 완료
-
-| 페이지 | 상태 |
-|--------|------|
-| 홈 (`/`) | 완료 — 다음 레이스 카운트다운, 최신 뉴스/하이라이트 프리뷰, 순위 TOP3, 팬 투표 CTA |
-| 경기 일정 (`/schedules`) | 완료 — 2025/2026 시즌, 라운드별 카드 UI |
-| 하이라이트 기본 (`/highlights`) | 완료 — 3축 필터, 슬라이더/그리드 뷰, 쇼츠 감지 |
-| 팬 투표 (`/prediction`) | 완료 — 팀 컬러 시각화, 3종 질문 유형, 단일 선택 토글, 복수 선택(최대 3), Supabase 저장 |: 각 항목 별 소속 팀 상징 색깔 바 추가하여 눈 피로도 감소 목표
-| 순위 (`/standings`) | 완료 — 포디움·순위 변동, Supabase 역대 검색, 팀 컬러 통일, 스켈레톤 로딩 |: 배치 2->10으로 증가 및 20세기/21세기 데이터 나눠 관리하여 로딩 시간 감소(20,21세기 모두 활동한 경우 21세기로 병합), 모바일 ui 개선: 스와핑 기능 유지하지만 줄로 수치 구분 및 한눈에 볼 수 있게 데이터 간 간격 감소
+### 인프라
+- [ ] 레포 private 전환 후 클린 이력으로 신규 레포 운영
+- [ ] Supabase Edge Function으로 RSS 수집 자동화 (현재 수동 트리거)
 
 ---
 
-### 🔧 진행 중
+## 법적 고지
 
-#### 하이라이트 (`/highlights`)
-- [ ] 키워드 검색 필터 추가
-
-#### 뉴스 (`/news`)
-- [ ] UI 전반 정리 및 개선
-- [ ] 로딩 성능 최적화 (느린 초기 로드 개선)
-- [ ] 전체적인 레이아웃/UX 재검토
-
-#### 경기 결과 (`/results`)
-- [ ] UI 전반 정리 및 개선
-- [ ] 로딩 성능 최적화
-- [ ] 세부 데이터 확장
-  - [ ] 레이스 당일 현지 날씨 데이터 표시(openf1 api: 레이스 당일 온도, 습도, 트랙 온도, 바람 등 평균 값으로 표시)
-  - [ ] 드라이버별 포디움 횟수 / 우승 횟수 통계 섹션
-  - [ ] 라운드별 결과에 따른 챔피언십 순위 변동 섹션
-  - [ ] 각 그랑프리 데이터 추가 및 오류 수정: 트랙 레코드와 레이스 거리 오류 수정/업데이트, 레이스 우승 카드 섹션 추가, 레이스 정보 카드 간격 수정(여백 없이)
-  - [ ] 다음 라운드 이동 페이지 제작으로 클릭 유도
-  - [ ] 결과 태그에 패스티스트 피트스톱과 폴 포지션 api 요청
-
----
-
-### 💡 추가 콘텐츠
-
-#### 홈 (`/`) — F1 입문 가이드 섹션
-* F1 뉴비를 위한 입문 콘텐츠 탭 추가
-  - 간단한 용어 및 경기 운영 방식 설명 -> 빨간색 점선 밑줄로 각주 추가(가독성 높이기 위한 기능)
-  - 팀/드라이버 탭 추가로 간단한 역사 및 업적 설명을 통한 유입 도모
-
----
-
-## ⚠️ 법적 고지
-
-WhatisF1은 팬이 제작한 비공식 프로젝트로, Formula 1®, FIA, 또는 어떤 F1 팀과도 공식 제휴 관계가 없습니다.  
-모든 상표, 로고, 브랜드명의 권리는 각 권리자에게 있습니다.
+WhatisF1은 팬이 제작한 비공식 프로젝트로, Formula 1®, FIA, 또는 어떤 F1 팀과도 공식 제휴 관계가 없습니다. 모든 상표, 로고, 브랜드명의 권리는 각 권리자에게 있습니다.
 
 ---
 
 <div align="center">
 
-© 2026 WhatisF1 · [인스타그램](https://www.instagram.com/what_is_f1__) · whatisf1@gmail.com
+© 2026 WhatisF1 &nbsp;·&nbsp; [Instagram](https://www.instagram.com/what_is_f1__) &nbsp;·&nbsp; whatisf1@gmail.com
 
 </div>
