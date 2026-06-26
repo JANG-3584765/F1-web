@@ -142,6 +142,7 @@ async function fetchRss(url: string, name: string): Promise<RawNewsItem[]> {
     const res = await fetch(url, {
       next: { revalidate: 1800 },
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; F1WebBot/1.0)' },
+      signal: AbortSignal.timeout(8000),
     })
     if (!res.ok) return []
     const xml = await res.text()
@@ -193,7 +194,7 @@ export async function fetchF1News(): Promise<NewsItem[]> {
       try {
         const res = await fetch(
           `https://www.racefans.net/wp-json/wp/v2/posts?slug=${slug}&_embed`,
-          { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; F1WebBot/1.0)' } }
+          { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; F1WebBot/1.0)' }, signal: AbortSignal.timeout(5000) }
         )
         if (!res.ok) return
         const data = await res.json() as Array<{ _embedded?: { 'wp:featuredmedia'?: WpFm[] } }>

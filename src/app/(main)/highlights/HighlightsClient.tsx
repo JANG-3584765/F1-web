@@ -481,11 +481,24 @@ export default function HighlightsClient({ videos, lastRace, topStandings, topCo
                       className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-200 block cursor-pointer"
                     >
                       <div className="aspect-[9/16] bg-[var(--bg-2)] relative overflow-hidden">
-                        {v.thumbnailUrl ? (
-                          <Image src={v.thumbnailUrl} alt={v.title} fill className="object-cover" sizes="(max-width: 639px) 33vw, (max-width: 1023px) 25vw, 17vw" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-[var(--muted)] text-[10px] font-bold">썸네일 없음</div>
-                        )}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={`https://i.ytimg.com/vi/${v.id}/oardefault.jpg`}
+                          alt={v.title}
+                          loading="lazy"
+                          className="absolute inset-0 w-full h-full object-cover"
+                          onError={e => {
+                            const img = e.currentTarget as HTMLImageElement
+                            const steps = [
+                              `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`,
+                              v.thumbnailUrl,
+                            ]
+                            const step = Number(img.dataset.fallback ?? '0')
+                            if (step >= steps.length || !steps[step]) { img.style.display = 'none'; return }
+                            img.dataset.fallback = String(step + 1)
+                            img.src = steps[step]
+                          }}
+                        />
                       </div>
                       <div className="p-1.5">
                         <span className="inline-block px-1.5 py-0.5 rounded-full text-[10px] font-black border border-[rgba(225,6,0,0.22)] bg-[rgba(225,6,0,0.08)] text-[#9b0d08]">
